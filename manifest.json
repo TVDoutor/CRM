@@ -1,0 +1,52 @@
+{
+  "name": "TV Doutor CRM",
+  "short_name": "TVD CRM",
+  "description": "Controle de Equipamentos de Exibição Digital",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#1B4F8C",
+  "theme_color": "#1B4F8C",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/icons/screenshot-desktop.png",
+      "sizes": "1280x800",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Dashboard TV Doutor CRM"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Kanban",
+      "short_name": "Kanban",
+      "description": "Abrir o Kanban de equipamentos",
+      "url": "/pages/kanban.php",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Equipamentos",
+      "short_name": "Equipamentos",
+      "description": "Listar equipamentos",
+      "url": "/pages/equipment/index.php",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+# Deploy
+TVDCRM_upload.zip
+
+# Env / secrets (NÃO commitar credenciais em repositório público)
+.env
+.env.local
+.env.*.local
+config/database.php
+config/pipedrive.php
+
+# Logs
+*.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# PHP
+vendor/
+composer.lock
+
+# Uploads (conteúdo gerado)
+uploads/
