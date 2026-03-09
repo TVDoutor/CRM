@@ -43,7 +43,9 @@ if (!$eq) {
 }
 
 $fromStatus = $eq['kanban_status'];
-$clientId   = ($toStatus === 'alocado') ? $eq['current_client_id'] : null;
+// Preservar client_id em aguardando_instalacao e alocado; zerar nos demais
+$keepClient = in_array($toStatus, ['aguardando_instalacao', 'alocado'], true);
+$clientId   = $keepClient ? ($eq['current_client_id'] ?? null) : null;
 
 kanbanMove($equipmentId, $fromStatus, $toStatus, $clientId, $notes);
 

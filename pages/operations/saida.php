@@ -65,16 +65,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm'])) {
                 $db->prepare("INSERT INTO equipment_operation_items (operation_id, equipment_id) VALUES (?,?)")
                    ->execute([$opId, $eId]);
 
-                $db->prepare("UPDATE equipment SET kanban_status='alocado', contract_type=?, current_client_id=?, updated_by=? WHERE id=?")
+                $db->prepare("UPDATE equipment SET kanban_status='aguardando_instalacao', contract_type=?, current_client_id=?, updated_by=? WHERE id=?")
                    ->execute([$contractType, $clientId, $_SESSION['user_id'], $eId]);
 
                 $db->prepare("INSERT INTO kanban_history (equipment_id, from_status, to_status, client_id, moved_by, notes)
-                              VALUES (?,?,'alocado',?,?,?)")
+                              VALUES (?,?,'aguardando_instalacao',?,?,?)")
                    ->execute([$eId, $curStatus, $clientId, $_SESSION['user_id'], "Saída para $clientName"]);
 
                 auditLog('SAIDA', 'equipment', $eId,
                     ['kanban_status' => $curStatus],
-                    ['kanban_status' => 'alocado', 'client_id' => $clientId],
+                    ['kanban_status' => 'aguardando_instalacao', 'client_id' => $clientId],
                     "Saída para cliente $clientName");
             }
 
@@ -84,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm'])) {
             $pipeErrors = [];
             foreach ($eqIds as $eId) {
                 try {
-                    $pushResult = pipePushCreateProject($eId, $clientId, 'alocado');
+                    $pushResult = pipePushCreateProject($eId, $clientId, 'aguardando_instalacao');
                     if (!($pushResult['success'] ?? false) && empty($pushResult['skipped'])) {
                         $pipeErrors[] = "Eq #{$eId}: " . ($pushResult['error'] ?? 'erro desconhecido');
                     }
