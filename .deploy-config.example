@@ -1,0 +1,10 @@
+# Configuração de Deploy - TV Doutor CRM
+# Copie este arquivo para .deploy-config e preencha com suas credenciais
+# NUNCA commite o .deploy-config com credenciais reais!
+
+FTP_HOST=ftp.tvdoutor.com.br
+FTP_USER=seu_usuario_ftp
+FTP_PASS=sua_senha_ftp
+FTP_PORT=21
+REMOTE_PATH=/home2/tvdout68/crm.tvdoutor.com.br
+DEPLOY_KEY=uma_chave_secreta_para_extract
