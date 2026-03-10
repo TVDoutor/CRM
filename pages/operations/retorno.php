@@ -71,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $db->prepare("INSERT INTO equipment_operations
                     (operation_type, operation_date, client_id, notes, performed_by)
                     VALUES ('RETORNO', ?, ?, ?, ?)")
-                   ->execute([str_replace('T', ' ', $opDate), $opNotes, $_SESSION['user_id']]);
+                   ->execute([str_replace('T', ' ', $opDate), $cid, $opNotes, $_SESSION['user_id']]);
                 $opId = (int)$db->lastInsertId();
 
                 $cnStmt = $db->prepare("SELECT name FROM clients WHERE id = ?");

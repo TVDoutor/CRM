@@ -27,18 +27,48 @@ WHERE kh.equipment_id = ? ORDER BY kh.moved_at ASC");
 $histStmt->execute([$id]);
 $history = $histStmt->fetchAll();
 
-// Histórico de devoluções (periféricos)
+// Histórico de devoluções: via tela Devolução/Retorno (equipment_operation_items) + via Kanban
 $retStmt = $db->prepare("SELECT eoi.created_at, eoi.accessories_power, eoi.accessories_hdmi,
     eoi.accessories_remote, eoi.condition_after_return, eoi.return_notes,
-    eo.operation_date, u.name as performed_by, c.name as client_name
+    eo.operation_date, u.name as performed_by, c.name as client_name, 0 as via_kanban
 FROM equipment_operation_items eoi
 JOIN equipment_operations eo ON eo.id = eoi.operation_id
 JOIN users u ON u.id = eo.performed_by
 LEFT JOIN clients c ON c.id = eo.client_id
 WHERE eoi.equipment_id = ? AND eo.operation_type = 'RETORNO'
-ORDER BY eoi.created_at DESC");
+ORDER BY eo.operation_date DESC");
 $retStmt->execute([$id]);
 $returns = $retStmt->fetchAll();
+
+// Devoluções via Kanban (quando movido direto para Eq. Usado/Manutenção/Baixado sem passar pela tela Retorno)
+$kanbanRetStmt = $db->prepare("SELECT kh.moved_at as operation_date, kh.notes as return_notes,
+    u.name as performed_by, c.name as client_name, 1 as via_kanban,
+    NULL as accessories_power, NULL as accessories_hdmi, NULL as accessories_remote,
+    CASE kh.to_status WHEN 'equipamento_usado' THEN 'ok' WHEN 'manutencao' THEN 'manutencao' WHEN 'baixado' THEN 'descartar' ELSE 'ok' END as condition_after_return
+FROM kanban_history kh
+JOIN users u ON u.id = kh.moved_by
+LEFT JOIN clients c ON c.id = kh.client_id
+WHERE kh.equipment_id = ?
+  AND kh.from_status IN ('alocado','licenca_removida','processo_devolucao')
+  AND kh.to_status IN ('equipamento_usado','manutencao','baixado')
+  AND NOT EXISTS (
+    SELECT 1 FROM equipment_operation_items eoi
+    JOIN equipment_operations eo ON eo.id = eoi.operation_id
+    WHERE eoi.equipment_id = kh.equipment_id AND eo.operation_type = 'RETORNO'
+      AND DATE(eo.operation_date) = DATE(kh.moved_at)
+  )
+ORDER BY kh.moved_at DESC");
+$kanbanRetStmt->execute([$id]);
+$returnsKanban = $kanbanRetStmt->fetchAll();
+
+// Mesclar e ordenar por data (mais recente primeiro)
+$returnsAll = array_merge($returns, $returnsKanban);
+usort($returnsAll, function($a, $b) {
+    $da = $a['operation_date'] ?? $a['created_at'] ?? '';
+    $db = $b['operation_date'] ?? $b['created_at'] ?? '';
+    return strcmp($db, $da);
+});
+$returns = $returnsAll;
 
 // Notas
 $notesStmt = $db->prepare("SELECT n.id, n.note, n.created_at, u.name as user_name
@@ -313,14 +343,18 @@ $conditionMap = ['ok' => '<span class="material-symbols-outlined text-sm">check_
           <div class="space-y-4">
             <?php foreach ($returns as $r): ?>
             <div class="bg-gray-50 rounded-lg p-3 text-sm">
-              <p class="font-medium text-gray-700 mb-1"><?= formatDate($r['operation_date'], true) ?></p>
+              <p class="font-medium text-gray-700 mb-1"><?= formatDate($r['operation_date'], true) ?><?= !empty($r['via_kanban']) ? ' <span class="text-[10px] font-normal text-gray-400">(via Kanban)</span>' : '' ?></p>
               <p class="text-xs text-gray-500 mb-2">Cliente: <?= sanitize($r['client_name'] ?? '—') ?> · por <?= sanitize($r['performed_by']) ?></p>
+              <?php if (!empty($r['via_kanban'])): ?>
+              <p class="text-xs text-gray-400 mb-2">Registrado no Kanban — sem checklist de periféricos</p>
+              <?php else: ?>
               <div class="flex gap-3 text-xs mb-2">
                 <span class="<?= $r['accessories_power']  ? 'text-green-600' : 'text-red-400 line-through' ?>">🔌 Fonte</span>
                 <span class="<?= $r['accessories_hdmi']   ? 'text-green-600' : 'text-red-400 line-through' ?>">📺 HDMI</span>
                 <span class="<?= $r['accessories_remote'] ? 'text-green-600' : 'text-red-400 line-through' ?>">🎮 Controle</span>
               </div>
-              <p class="text-xs">Condição: <strong><?= $conditionMap[$r['condition_after_return']] ?? $r['condition_after_return'] ?></strong></p>
+              <?php endif; ?>
+              <p class="text-xs">Condição: <strong><?= $conditionMap[$r['condition_after_return'] ?? ''] ?? ($r['condition_after_return'] ?? '—') ?></strong></p>
               <?php if ($r['return_notes']): ?>
                 <p class="text-xs text-gray-400 italic mt-1"><?= sanitize($r['return_notes']) ?></p>
               <?php endif; ?>
