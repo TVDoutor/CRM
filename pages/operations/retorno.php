@@ -73,11 +73,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $cnStmt->execute([$cid]);
                 $clientName = $cnStmt->fetchColumn();
 
+                $allowedCond = ['ok', 'manutencao', 'descartar'];
                 foreach ($eIds as $eId) {
                     $power   = isset($_POST['accessories_power'][$eId])  ? 1 : 0;
                     $hdmi    = isset($_POST['accessories_hdmi'][$eId])   ? 1 : 0;
                     $remote  = isset($_POST['accessories_remote'][$eId]) ? 1 : 0;
                     $cond    = $_POST['condition_after_return'][$eId]    ?? 'ok';
+                    if (!in_array($cond, $allowedCond, true)) $cond = 'ok';
                     $retNote = trim($_POST['return_notes'][$eId] ?? '') ?: null;
 
                     $fromStatusStmt = $db->prepare("SELECT kanban_status FROM equipment WHERE id = ?");

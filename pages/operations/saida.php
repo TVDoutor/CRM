@@ -24,6 +24,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm'])) {
 
     $clientId     = (int)($_POST['client_id']     ?? 0);
     $contractType = trim($_POST['contract_type']  ?? '');
+    $allowedContract = ['comodato', 'equipamento_cliente', 'parceria'];
+    if (!in_array($contractType, $allowedContract, true)) $contractType = 'comodato';
     $opDate       = trim($_POST['operation_date'] ?? date('Y-m-d\TH:i'));
     $opNotes      = trim($_POST['op_notes']       ?? '') ?: null;
     $eqIds        = array_filter(array_map('intval', $_POST['equipment_ids'] ?? []));

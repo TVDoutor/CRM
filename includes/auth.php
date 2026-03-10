@@ -85,8 +85,12 @@ function csrfField(): string {
     return '<input type="hidden" name="csrf_token" value="' . htmlspecialchars(csrfToken()) . '">';
 }
 
+function csrfValid(): bool {
+    return isset($_POST['csrf_token']) && $_POST['csrf_token'] === ($_SESSION['csrf_token'] ?? '');
+}
+
 function csrfValidate(): void {
-    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== ($_SESSION['csrf_token'] ?? '')) {
+    if (!csrfValid()) {
         http_response_code(403);
         die('Token CSRF inválido.');
     }

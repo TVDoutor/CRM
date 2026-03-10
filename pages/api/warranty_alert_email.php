@@ -17,8 +17,9 @@ require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../config/pipedrive.php';
 require_once __DIR__ . '/../../includes/helpers.php';
 
+$cronKey = $_GET['cron_key'] ?? $_SERVER['HTTP_X_CRON_KEY'] ?? '';
 $isCron = (PHP_SAPI === 'cli' && isset($argv[1]) && $argv[1] === 'cron')
-       || (isset($_GET['cron_key']) && $_GET['cron_key'] === PIPEDRIVE_CRON_KEY);
+       || ($cronKey === PIPEDRIVE_CRON_KEY);
 
 if (!$isCron) {
     require_once __DIR__ . '/../../includes/auth.php';

@@ -16,9 +16,15 @@ function csvRow(array $cols): string {
     return implode(',', array_map(fn($v) => '"' . str_replace('"', '""', (string)$v) . '"', $cols)) . "\r\n";
 }
 
+function safeFilename(string $raw): string {
+    $safe = preg_replace('/[^\p{L}\p{N}\-_\.]/u', '_', $raw);
+    return substr($safe, 0, 100) ?: 'export';
+}
+
 function sendCsv(string $filename, array $headers, array $rows): void {
+    $safe = safeFilename(pathinfo($filename, PATHINFO_FILENAME)) . '.csv';
     header('Content-Type: text/csv; charset=UTF-8');
-    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Content-Disposition: attachment; filename="' . $safe . '"');
     header('Cache-Control: no-cache');
     echo "\xEF\xBB\xBF"; // BOM UTF-8 para Excel
     echo csvRow($headers);
@@ -122,7 +128,7 @@ if ($report === 'by_equipment') {
         formatDate($r['moved_at'], true), $r['moved_by'], $r['notes'] ?? '',
     ], $rows);
 
-    sendCsv('historico_' . $search . '_' . date('Ymd') . '.csv',
+    sendCsv('historico_' . safeFilename($search) . '_' . date('Ymd') . '.csv',
         ['Etiqueta','Modelo','S/N','De','Para','Cliente','Data/Hora','Responsável','Observação'],
         $data);
 }
@@ -155,7 +161,7 @@ if ($report === 'by_client') {
         $r['returned_at'] ? formatDate($r['returned_at'], true) : 'Alocado',
     ], $rows);
 
-    sendCsv('cliente_' . $client['client_code'] . '_' . date('Ymd') . '.csv',
+    sendCsv('cliente_' . safeFilename($client['client_code'] ?? '') . '_' . date('Ymd') . '.csv',
         ['Etiqueta','Modelo','1ª Alocação','Devolução'],
         $data);
 }

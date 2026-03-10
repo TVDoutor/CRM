@@ -18,7 +18,8 @@ $isCronCli = (PHP_SAPI === 'cli' && ($argv[1] ?? '') === 'cron');
 // Carregar config do Pipedrive primeiro (necessário para PIPEDRIVE_CRON_KEY)
 require_once __DIR__ . '/../../config/pipedrive.php';
 
-$isCronUrl = (!$isCronCli && isset($_GET['cron_key']) && $_GET['cron_key'] === PIPEDRIVE_CRON_KEY);
+$cronKey = $_GET['cron_key'] ?? $_SERVER['HTTP_X_CRON_KEY'] ?? '';
+$isCronUrl = (!$isCronCli && $cronKey === PIPEDRIVE_CRON_KEY);
 $isCron    = $isCronCli || $isCronUrl;
 $isManual  = !$isCron;
 

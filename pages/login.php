@@ -8,6 +8,9 @@ if (isLoggedIn()) {
 
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!csrfValid()) {
+        $error = 'Sessão expirada. Recarregue a página e tente novamente.';
+    } else {
     $email    = trim($_POST['email']    ?? '');
     $password = trim($_POST['password'] ?? '');
 
@@ -18,6 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         header('Location: ' . BASE_URL . '/pages/dashboard.php');
         exit;
+    }
     }
 }
 ?>
@@ -58,6 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <?php endif; ?>
 
       <form method="POST" novalidate>
+        <?= csrfField() ?>
         <div class="mb-4">
           <label class="block text-sm font-medium text-gray-700 mb-1.5" for="email">E-mail</label>
           <input type="email" id="email" name="email"
