@@ -21,6 +21,9 @@ if (!function_exists('macLast6')) {
 // Desativa todas as atualizações CRM → Pipedrive (push)
 define('PIPE_PUSH_ENABLED', false);
 
+// Habilita push apenas para movimentação de card no Kanban (quando equipamento e fase existem no Pipedrive)
+define('PIPE_PUSH_KANBAN_MOVE_ENABLED', true);
+
 // Board ID e ID do owner padrão (usuário proprietário dos projetos criados pelo CRM)
 // owner_id = 0 significa que o Pipedrive usará o dono da API key
 define('PIPE_PUSH_BOARD_ID', 8);
@@ -187,7 +190,9 @@ function pipePushCreateProject(int $equipmentId, int $clientId, string $kanbanSt
  */
 function pipePushUpdatePhase(int $pipedriveId, string $kanbanStatus): array
 {
-    if (!(defined('PIPE_PUSH_ENABLED') && PIPE_PUSH_ENABLED)) {
+    $pushEnabled = (defined('PIPE_PUSH_ENABLED') && PIPE_PUSH_ENABLED)
+        || (defined('PIPE_PUSH_KANBAN_MOVE_ENABLED') && PIPE_PUSH_KANBAN_MOVE_ENABLED);
+    if (!$pushEnabled) {
         return ['success' => true, 'skipped' => true, 'reason' => 'Push Pipedrive desativado.'];
     }
     $phaseId = pipeResolvePhaseId($kanbanStatus);
@@ -219,8 +224,11 @@ function pipePushUpdatePhase(int $pipedriveId, string $kanbanStatus): array
 }
 
 /**
- * Dado um equipment_id, encontra o pipedrive_id correspondente e atualiza a fase.
- * Função de alto nível chamada pelo kanban_move.php.
+ * Sincroniza o movimento do Kanban CRM com o Pipedrive.
+ * Regras:
+ * - Se o equipamento NÃO existe no Pipedrive → não faz nada (apenas alterações no CRM)
+ * - Se a fase de destino NÃO tem correspondência no Pipedrive → não faz nada (apenas alterações no CRM)
+ * - Se existe no Pipedrive E a fase tem correspondência → move o card no Pipedrive também
  *
  * @param int    $equipmentId  ID do equipamento no CRM
  * @param string $kanbanStatus Novo status Kanban
@@ -228,12 +236,14 @@ function pipePushUpdatePhase(int $pipedriveId, string $kanbanStatus): array
  */
 function pipePushSyncStatus(int $equipmentId, string $kanbanStatus): array
 {
-    if (!(defined('PIPE_PUSH_ENABLED') && PIPE_PUSH_ENABLED)) {
-        return ['success' => true, 'skipped' => true, 'reason' => 'Push Pipedrive desativado.'];
+    if (!(defined('PIPE_PUSH_KANBAN_MOVE_ENABLED') && PIPE_PUSH_KANBAN_MOVE_ENABLED)) {
+        return ['success' => true, 'skipped' => true, 'reason' => 'Push Kanban → Pipedrive desativado.'];
     }
+
+    // Fase não mapeada no Pipedrive → altera só no CRM
     $phaseId = pipeResolvePhaseId($kanbanStatus);
     if (!$phaseId) {
-        return ['success' => true, 'skipped' => true, 'reason' => "Status '$kanbanStatus' sem fase no Pipedrive."];
+        return ['success' => true, 'skipped' => true, 'reason' => "Fase '$kanbanStatus' não existe no Pipedrive — alteração apenas no CRM."];
     }
 
     $db = getDB();
@@ -246,13 +256,13 @@ function pipePushSyncStatus(int $equipmentId, string $kanbanStatus): array
 
     $suffix6 = macLast6($assetTag);
 
-    // Buscar pipedrive_id na tabela de cache
+    // Equipamento não existe no Pipedrive → altera só no CRM
     $ppStmt = $db->prepare("SELECT pipedrive_id FROM pipedrive_projects WHERE asset_tag LIKE ? AND board_id = 8 AND status = 'open' LIMIT 1");
     $ppStmt->execute(['%' . $suffix6]);
     $row = $ppStmt->fetch(\PDO::FETCH_ASSOC);
 
     if (!$row || !$row['pipedrive_id']) {
-        return ['success' => false, 'error' => "Nenhum projeto Pipedrive encontrado para o equipamento $assetTag."];
+        return ['success' => true, 'skipped' => true, 'reason' => "Equipamento não encontrado no Pipedrive — alteração apenas no CRM."];
     }
 
     return pipePushUpdatePhase((int)$row['pipedrive_id'], $kanbanStatus);

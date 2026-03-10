@@ -296,7 +296,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       </div>
 
       <div class="flex gap-3">
-        <button type="submit"
+        <button type="submit" id="btnSubmitBatch"
                 class="bg-green-600 text-white px-8 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition">
           💾 Salvar Lote
         </button>
@@ -308,6 +308,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </form>
   </div>
 </main>
+
+<!-- Modal: Equipamentos Preenchidos -->
+<div id="saveConfirmModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center">
+    <p class="text-gray-800 font-medium mb-6">Equipamentos Preenchidos, deseja salvar?</p>
+    <div class="flex gap-3 justify-center">
+      <button type="button" onclick="confirmSaveBatch()"
+              class="px-6 py-2.5 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition">
+        Sim
+      </button>
+      <button type="button" onclick="cancelSaveBatch()"
+              class="px-6 py-2.5 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition">
+        Não
+      </button>
+    </div>
+  </div>
+</div>
 
 <script>
 const DRAFT_KEY = 'tvd_batch_entry_draft';
@@ -456,12 +473,72 @@ function initAutoSave() {
     form.addEventListener('change', debouncedSave);
 }
 
+let _saveModalPending = false;
+
+function handleMacFilled(macInput) {
+    const raw = macInput.value.replace(/[^A-Fa-f0-9]/g, '');
+    if (raw.length >= 12) {
+        const row = macInput.closest('.equipment-row');
+        const serialInput = row?.querySelector('input[name="serial_number[]"]');
+        if (serialInput) serialInput.focus();
+    }
+}
+
+function handleSerialFilled(serialInput) {
+    if (!serialInput.value.trim()) return;
+    const row = serialInput.closest('.equipment-row');
+    const nextRow = row?.nextElementSibling;
+    if (nextRow) {
+        const nextMac = nextRow.querySelector('input[name="mac_address[]"]');
+        if (nextMac) nextMac.focus();
+    } else {
+        showSaveConfirmModal();
+    }
+}
+
+function showSaveConfirmModal() {
+    if (_saveModalPending) return;
+    _saveModalPending = true;
+    document.getElementById('saveConfirmModal').classList.remove('hidden');
+}
+
+function confirmSaveBatch() {
+    _saveModalPending = false;
+    document.getElementById('saveConfirmModal').classList.add('hidden');
+    document.getElementById('batchForm')?.requestSubmit();
+}
+
+function cancelSaveBatch() {
+    _saveModalPending = false;
+    document.getElementById('saveConfirmModal').classList.add('hidden');
+    const serials = document.querySelectorAll('input[name="serial_number[]"]');
+    if (serials.length) serials[serials.length - 1].focus();
+}
+
+function initBatchEntryNav() {
+    const container = document.getElementById('equipmentRows');
+    if (!container) return;
+
+    container.addEventListener('input', function(e) {
+        if (e.target.matches('input[name="mac_address[]"]')) {
+            handleMacFilled(e.target);
+        }
+    });
+
+    container.addEventListener('blur', function(e) {
+        if (e.target.matches('input[name="serial_number[]"]')) {
+            handleSerialFilled(e.target);
+        }
+    }, true);
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('input[name="mac_address[]"]').forEach(function(inp) {
         if (inp.value) formatMacMask(inp);
     });
 
     initAutoSave();
+    initBatchEntryNav();
 
     document.getElementById('batchForm')?.addEventListener('submit', function() {
         // Não limpar rascunho no submit: em caso de erro/timeout, o usuário pode restaurar ao voltar

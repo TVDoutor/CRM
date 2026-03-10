@@ -34,6 +34,46 @@ if ($action === 'create' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+// ── Manutenção: excluir lotes vazios e sincronizar batch nos equipamentos ─────
+if ($action === 'cleanup' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrfValidate();
+    $db->beginTransaction();
+    try {
+        // 1. Excluir lotes com 0 equipamentos
+        $toDelete = $db->query("
+            SELECT b.id, b.name
+            FROM batches b
+            LEFT JOIN equipment e ON e.batch_id = b.id
+            GROUP BY b.id
+            HAVING COUNT(e.id) = 0
+        ")->fetchAll();
+        $deleted = 0;
+        foreach ($toDelete as $row) {
+            $db->prepare("DELETE FROM batches WHERE id = ?")->execute([$row['id']]);
+            $deleted++;
+            auditLog('DELETE', 'batches', (int)$row['id'], ['name' => $row['name']], null, "Lote excluído (0 equipamentos): {$row['name']}");
+        }
+        // 2. Sincronizar campo legado batch nos equipamentos que têm batch_id
+        $stmtUpd = $db->prepare("
+            UPDATE equipment e
+            JOIN batches b ON b.id = e.batch_id
+            SET e.batch = b.name
+            WHERE e.batch_id IS NOT NULL AND (e.batch IS NULL OR e.batch != b.name)
+        ");
+        $stmtUpd->execute();
+        $updated = $stmtUpd->rowCount();
+        $db->commit();
+        $msg = "Lotes vazios excluídos: $deleted.";
+        if ($updated > 0) $msg .= " Campo lote sincronizado em $updated equipamento(s).";
+        flashSet('success', $msg);
+    } catch (Throwable $e) {
+        $db->rollBack();
+        flashSet('error', 'Erro na manutenção: ' . $e->getMessage());
+    }
+    header('Location: ' . BASE_URL . '/pages/equipment/batches.php');
+    exit;
+}
+
 // ── Editar lote ─────────────────────────────────────────────────────────────
 if ($action === 'edit' && $id && $_SERVER['REQUEST_METHOD'] === 'POST') {
     csrfValidate();
@@ -130,13 +170,31 @@ if ($action === 'view' && $batch) {
         <h1 class="text-2xl font-bold text-gray-800">Lotes</h1>
         <p class="text-gray-500 text-sm mt-0.5">Gerencie os lotes de compra de equipamentos</p>
       </div>
-      <a href="?action=create"
-         class="flex items-center gap-2 bg-brand text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-blue-800 transition">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-        </svg>
-        Novo Lote
-      </a>
+      <div class="flex items-center gap-3">
+        <?php
+        $emptyCount = count(array_filter($batches ?? [], fn($b) => (int)($b['equipment_count'] ?? 0) === 0));
+        if ($emptyCount > 0):
+        ?>
+        <form method="post" action="?action=cleanup" class="inline"
+              onsubmit="return confirm('Excluir <?= $emptyCount ?> lote(s) com 0 equipamentos e sincronizar o campo lote nos demais equipamentos?');">
+          <?= csrfField() ?>
+          <button type="submit"
+                  class="flex items-center gap-2 bg-amber-100 text-amber-800 px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-amber-200 transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+            </svg>
+            Limpar lotes vazios (<?= $emptyCount ?>)
+          </button>
+        </form>
+        <?php endif; ?>
+        <a href="?action=create"
+           class="flex items-center gap-2 bg-brand text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-blue-800 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+          Novo Lote
+        </a>
+      </div>
     </div>
 
     <?php if (empty($batches)): ?>

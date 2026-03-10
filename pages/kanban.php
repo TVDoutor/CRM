@@ -173,7 +173,10 @@ try {
                ondragleave="handleDragLeave(event)">
 
             <?php if ($isEmpty): ?>
-            <div class="border-2 border-dashed border-slate-300 rounded-lg h-20 flex items-center justify-center">
+            <div class="empty-drop-zone border-2 border-dashed border-slate-300 rounded-lg h-20 flex items-center justify-center"
+                 data-status="<?= $status ?>"
+                 ondragover="handleDragOver(event); event.stopPropagation();"
+                 ondrop="event.stopPropagation(); handleDrop(event)">
               <p class="text-xs text-slate-400 italic">Nenhum item</p>
             </div>
             <?php endif; ?>
@@ -391,21 +394,26 @@ function handleDragStart(e) {
     draggedId   = e.currentTarget.dataset.id;
     draggedFrom = e.currentTarget.dataset.status;
     e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', draggedId);
 }
 
 function handleDragOver(e) {
     e.preventDefault();
-    e.currentTarget.classList.add('drag-over');
+    e.dataTransfer.dropEffect = 'move';
+    const col = e.target.closest('.kanban-col');
+    if (col) col.classList.add('drag-over');
 }
 
 function handleDragLeave(e) {
-    e.currentTarget.classList.remove('drag-over');
+    const col = e.currentTarget;
+    if (!col.contains(e.relatedTarget)) col.classList.remove('drag-over');
 }
 
 function handleDrop(e) {
     e.preventDefault();
-    e.currentTarget.classList.remove('drag-over');
-    const newStatus = e.currentTarget.dataset.status;
+    const col = e.target.closest('.kanban-col');
+    if (col) col.classList.remove('drag-over');
+    const newStatus = (col || e.currentTarget).dataset.status;
     if (!draggedId || newStatus === draggedFrom) return;
 
     targetStatus = newStatus;

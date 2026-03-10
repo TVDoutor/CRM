@@ -18,7 +18,7 @@ $stmt = $db->query("SELECT e.id, e.asset_tag, e.mac_address, e.serial_number, e.
 FROM equipment e
 JOIN equipment_models em ON em.id = e.model_id
 JOIN clients c ON c.id = e.current_client_id
-WHERE e.kanban_status = 'alocado'
+WHERE e.kanban_status IN ('alocado', 'processo_devolucao', 'licenca_removida')
 ORDER BY c.name, e.asset_tag");
 $alocados = $stmt->fetchAll();
 
@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Validar que são equipamentos alocados
     if (!empty($selectedIds)) {
         $ph = implode(',', array_fill(0, count($selectedIds), '?'));
-        $valStmt = $db->prepare("SELECT id, current_client_id FROM equipment WHERE id IN ($ph) AND kanban_status = 'alocado'");
+        $valStmt = $db->prepare("SELECT id, current_client_id FROM equipment WHERE id IN ($ph) AND kanban_status IN ('alocado', 'processo_devolucao', 'licenca_removida')");
         $valStmt->execute(array_values($selectedIds));
         $valid = $valStmt->fetchAll();
         if (count($valid) !== count($selectedIds)) $errors[] = 'Alguns equipamentos não estão alocados.';
@@ -80,6 +80,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $cond    = $_POST['condition_after_return'][$eId]    ?? 'ok';
                     $retNote = trim($_POST['return_notes'][$eId] ?? '') ?: null;
 
+                    $fromStatusStmt = $db->prepare("SELECT kanban_status FROM equipment WHERE id = ?");
+                    $fromStatusStmt->execute([$eId]);
+                    $fromStatus = $fromStatusStmt->fetchColumn() ?: 'alocado';
+
                     $newStatus = match($cond) {
                         'manutencao' => 'manutencao',
                         'descartar'  => 'baixado',
@@ -99,12 +103,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     $db->prepare("INSERT INTO kanban_history
                         (equipment_id, from_status, to_status, client_id, moved_by, notes)
-                        VALUES (?,'alocado',?,?,?,?)")
-                       ->execute([$eId, $newStatus, $cid, $_SESSION['user_id'],
+                        VALUES (?,?,?,?,?,?)")
+                       ->execute([$eId, $fromStatus, $newStatus, $cid, $_SESSION['user_id'],
                                   "Devolução de $clientName | Fonte:$power HDMI:$hdmi Controle:$remote"]);
 
                     auditLog('RETORNO', 'equipment', $eId,
-                        ['kanban_status' => 'alocado', 'client_id' => $cid],
+                        ['kanban_status' => $fromStatus, 'client_id' => $cid],
                         ['kanban_status' => $newStatus, 'client_id' => null],
                         "Devolução de $clientName | Periféricos: fonte=$power, hdmi=$hdmi, controle=$remote");
                 }
@@ -157,7 +161,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <!-- Filtro por cliente -->
     <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-5 flex items-center gap-3">
       <label class="text-sm font-medium text-gray-700">Filtrar por cliente:</label>
-      <input type="text" id="clientFilter" placeholder="Nome do cliente..."
+      <input type="text" id="clientFilter" placeholder="Nome, código do cliente (ex: P2254) ou MAC/player (ex: B8DF)..."
              oninput="filterByClient()"
              class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand">
     </div>
@@ -167,7 +171,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <div id="clientGroups" class="space-y-5">
         <?php foreach ($byClient as $cid => $clientData): ?>
         <div class="client-group bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden"
-             data-client="<?= strtolower(sanitize($clientData['name'])) ?>">
+             data-client="<?= strtolower(sanitize($clientData['name'])) ?>"
+             data-client-code="<?= strtolower(sanitize($clientData['code'] ?? '')) ?>"
+             data-equipment-tags="<?= strtolower(implode(' ', array_map(function($i) {
+    $tag = displayTag($i['asset_tag'], $i['mac_address'] ?? null);
+    $mac = preg_replace('/[^a-f0-9]/', '', strtolower($i['mac_address'] ?? ''));
+    $ast = strtolower($i['asset_tag'] ?? '');
+    return $tag . ' ' . $mac . ' ' . $ast;
+}, $clientData['items']))) ?>">
           <div class="bg-gray-50 px-5 py-3 border-b border-gray-100 flex items-center justify-between">
             <div>
               <p class="font-semibold text-gray-800"><?= sanitize($clientData['name']) ?></p>
@@ -300,9 +311,16 @@ function updateReturnCount() {
 }
 
 function filterByClient() {
-    const q = document.getElementById('clientFilter').value.toLowerCase();
+    const q = document.getElementById('clientFilter').value.toLowerCase().trim();
+    if (!q) {
+        document.querySelectorAll('.client-group').forEach(g => g.classList.remove('hidden'));
+        return;
+    }
     document.querySelectorAll('.client-group').forEach(g => {
-        g.classList.toggle('hidden', q && !g.dataset.client.includes(q));
+        const matchName = (g.dataset.client || '').includes(q);
+        const matchCode = (g.dataset.clientCode || '').includes(q);
+        const matchEq = (g.dataset.equipmentTags || '').includes(q);
+        g.classList.toggle('hidden', !matchName && !matchCode && !matchEq);
     });
 }
 </script>
