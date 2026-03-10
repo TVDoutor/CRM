@@ -23,24 +23,32 @@ if ($search) {
             DATEDIFF(NOW(), kh.moved_at) as days_allocated
         FROM equipment e
         JOIN equipment_models em ON em.id = e.model_id
-        JOIN kanban_history kh ON kh.equipment_id = e.id
-        WHERE e.current_client_id = ? AND e.kanban_status = 'alocado'
+        LEFT JOIN kanban_history kh ON kh.equipment_id = e.id
           AND kh.to_status = 'alocado'
           AND kh.id = (SELECT MAX(id) FROM kanban_history WHERE equipment_id = e.id AND to_status = 'alocado')
+        WHERE e.current_client_id = ? AND e.kanban_status = 'alocado'
         ORDER BY days_allocated DESC");
         $activeStmt->execute([$cid]);
         $activeEq = $activeStmt->fetchAll();
 
-        $histStmt = $db->prepare("SELECT DISTINCT e.id, e.asset_tag, e.mac_address, em.brand, em.model_name,
+        $histStmt = $db->prepare("
+        (SELECT e.id, e.asset_tag, e.mac_address, em.brand, em.model_name,
             MIN(kh.moved_at) as first_allocation,
             MAX(CASE WHEN kh.to_status != 'alocado' THEN kh.moved_at END) as returned_at
         FROM kanban_history kh
         JOIN equipment e ON e.id = kh.equipment_id
         JOIN equipment_models em ON em.id = e.model_id
         WHERE kh.client_id = ?
-        GROUP BY e.id
+        GROUP BY e.id)
+        UNION
+        (SELECT e.id, e.asset_tag, e.mac_address, em.brand, em.model_name,
+            NULL as first_allocation, NULL as returned_at
+        FROM equipment e
+        JOIN equipment_models em ON em.id = e.model_id
+        WHERE e.current_client_id = ? AND e.kanban_status = 'alocado'
+          AND e.id NOT IN (SELECT equipment_id FROM kanban_history WHERE client_id = ?))
         ORDER BY first_allocation DESC");
-        $histStmt->execute([$cid]);
+        $histStmt->execute([$cid, $cid, $cid]);
         $history = $histStmt->fetchAll();
     }
 }
