@@ -484,17 +484,23 @@ function handleMacFilled(macInput) {
     if (raw.length >= 12) {
         const row = macInput.closest('.equipment-row');
         const serialInput = row?.querySelector('input[name="serial_number[]"]');
-        if (serialInput) serialInput.focus();
+        if (serialInput) {
+            serialInput.focus();
+            serialInput.select();
+        }
     }
 }
 
-function handleSerialFilled(serialInput) {
+function handleSerialNav(serialInput) {
     if (!serialInput.value.trim()) return;
     const row = serialInput.closest('.equipment-row');
     const nextRow = row?.nextElementSibling;
     if (nextRow) {
         const nextMac = nextRow.querySelector('input[name="mac_address[]"]');
-        if (nextMac) nextMac.focus();
+        if (nextMac) {
+            nextMac.focus();
+            nextMac.select();
+        }
     } else {
         showSaveConfirmModal();
     }
@@ -530,17 +536,37 @@ function initBatchEntryNav() {
     const container = document.getElementById('equipmentRows');
     if (!container) return;
 
+    // Auto-jump MAC → Serial when 12 hex digits typed/scanned
     container.addEventListener('input', function(e) {
         if (e.target.matches('input[name="mac_address[]"]')) {
             handleMacFilled(e.target);
         }
     });
 
-    container.addEventListener('blur', function(e) {
-        if (e.target.matches('input[name="serial_number[]"]')) {
-            handleSerialFilled(e.target);
+    // Enter key from barcode scanner: navigate between fields
+    container.addEventListener('keydown', function(e) {
+        if (e.key !== 'Enter') return;
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (e.target.matches('input[name="mac_address[]"]')) {
+            const row = e.target.closest('.equipment-row');
+            const serialInput = row?.querySelector('input[name="serial_number[]"]');
+            if (serialInput) {
+                serialInput.focus();
+                serialInput.select();
+            }
+        } else if (e.target.matches('input[name="serial_number[]"]')) {
+            handleSerialNav(e.target);
+        } else if (e.target.matches('input[name="asset_tag[]"]')) {
+            const row = e.target.closest('.equipment-row');
+            const nextRow = row?.nextElementSibling;
+            if (nextRow) {
+                const nextMac = nextRow.querySelector('input[name="mac_address[]"]');
+                if (nextMac) { nextMac.focus(); nextMac.select(); }
+            }
         }
-    }, true);
+    });
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -551,9 +577,11 @@ document.addEventListener('DOMContentLoaded', function() {
     initAutoSave();
     initBatchEntryNav();
 
-    document.getElementById('batchForm')?.addEventListener('submit', function() {
-        // Não limpar rascunho no submit: em caso de erro/timeout, o usuário pode restaurar ao voltar
-        // O rascunho será sobrescrito no próximo auto-save ou limpo após sucesso (redirect)
+    // Bloquear submit por Enter (pistola de código de barras envia Enter)
+    document.getElementById('batchForm')?.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && e.target.tagName === 'INPUT') {
+            e.preventDefault();
+        }
     });
 
     if (!fromPostWithErrors) {
