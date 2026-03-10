@@ -46,12 +46,12 @@ $rows = $stmt->fetchAll();
 $users = $db->query("SELECT id, name FROM users WHERE is_active = 1 ORDER BY name")->fetchAll();
 
 $opMeta = [
-    'ENTRADA'    => ['label' => 'Entrada de Lote', 'icon' => '📦', 'cls' => 'bg-blue-100 text-blue-800'],
-    'SAIDA'      => ['label' => 'Saída',           'icon' => '📤', 'cls' => 'bg-green-100 text-green-800'],
-    'RETORNO'    => ['label' => 'Devolução',        'icon' => '📥', 'cls' => 'bg-orange-100 text-orange-800'],
-    'KANBAN_MOVE'=> ['label' => 'Mov. Kanban',      'icon' => '🔄', 'cls' => 'bg-gray-100 text-gray-700'],
-    'MANUTENCAO' => ['label' => 'Manutenção',       'icon' => '🔧', 'cls' => 'bg-yellow-100 text-yellow-800'],
-    'BAIXA'      => ['label' => 'Baixa',            'icon' => '🗑️', 'cls' => 'bg-red-100 text-red-800'],
+    'ENTRADA'    => ['label' => 'Entrada de Lote', 'icon' => 'inventory_2',   'cls' => 'bg-blue-100 text-blue-800'],
+    'SAIDA'      => ['label' => 'Saída',           'icon' => 'call_made',     'cls' => 'bg-green-100 text-green-800'],
+    'RETORNO'    => ['label' => 'Devolução',        'icon' => 'call_received', 'cls' => 'bg-orange-100 text-orange-800'],
+    'KANBAN_MOVE'=> ['label' => 'Mov. Kanban',      'icon' => 'swap_horiz',   'cls' => 'bg-gray-100 text-gray-700'],
+    'MANUTENCAO' => ['label' => 'Manutenção',       'icon' => 'build',        'cls' => 'bg-yellow-100 text-yellow-800'],
+    'BAIXA'      => ['label' => 'Baixa',            'icon' => 'delete',       'cls' => 'bg-red-100 text-red-800'],
 ];
 ?>
 <!DOCTYPE html>
@@ -60,13 +60,17 @@ $opMeta = [
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Histórico de Operações — TV Doutor CRM</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
   <script>tailwind.config={theme:{extend:{colors:{brand:{DEFAULT:'#1B4F8C',dark:'#153d6f',light:'#D6E4F0'}}}}}</script>
 </head>
 <body class="bg-gray-50 flex h-screen overflow-hidden">
 <?php require_once __DIR__ . '/../../includes/navbar.php'; ?>
 <main class="flex-1 p-4 lg:p-8 overflow-auto pt-16 lg:pt-4">
   <div class="max-w-6xl mx-auto">
-    <h1 class="text-xl lg:text-2xl font-bold text-gray-800 mb-6">📜 Histórico de Operações</h1>
+    <h1 class="text-xl lg:text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+      <span class="material-symbols-outlined text-brand">history</span>
+      Histórico de Operações
+    </h1>
 
     <!-- Filtros -->
     <form method="GET" class="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-6">
@@ -112,7 +116,10 @@ $opMeta = [
           </thead>
           <tbody class="divide-y divide-gray-50">
             <?php if (empty($rows)): ?>
-            <tr><td colspan="6" class="text-center py-10 text-gray-400">Nenhuma operação encontrada.</td></tr>
+            <tr><td colspan="6" class="text-center py-16">
+              <span class="material-symbols-outlined text-5xl text-gray-300">search_off</span>
+              <p class="text-gray-400 font-medium mt-2">Nenhuma operação encontrada</p>
+            </td></tr>
             <?php endif; ?>
             <?php foreach ($rows as $r):
               $meta = $opMeta[$r['operation_type']] ?? ['label' => $r['operation_type'], 'icon' => '•', 'cls' => 'bg-gray-100 text-gray-700'];
@@ -121,7 +128,7 @@ $opMeta = [
               <td class="px-4 py-3 text-gray-600 whitespace-nowrap"><?= formatDate($r['operation_date'], true) ?></td>
               <td class="px-4 py-3">
                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold <?= $meta['cls'] ?>">
-                  <?= $meta['icon'] ?> <?= $meta['label'] ?>
+                  <span class="material-symbols-outlined" style="font-size:12px"><?= $meta['icon'] ?></span> <?= $meta['label'] ?>
                 </span>
               </td>
               <td class="px-4 py-3 text-gray-700">

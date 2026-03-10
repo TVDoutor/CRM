@@ -27,6 +27,7 @@ $totalClients = $db->query("SELECT COUNT(*) FROM clients")->fetchColumn();
   <title>Integração Pipedrive — TV Doutor CRM</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config={theme:{extend:{colors:{brand:{DEFAULT:'#1B4F8C',dark:'#153d6f',light:'#D6E4F0'}}}}}</script>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 </head>
 <body class="bg-gray-50 flex h-screen overflow-hidden">
 <?php require_once __DIR__ . '/../../includes/navbar.php'; ?>
@@ -51,7 +52,7 @@ $totalClients = $db->query("SELECT COUNT(*) FROM clients")->fetchColumn();
       <button id="btnSync"
               onclick="runSync()"
               class="flex items-center gap-2 bg-[#0F4C81] hover:bg-blue-900 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition">
-        <span id="syncIcon">🔄</span>
+        <span id="syncIcon"><span class="material-symbols-outlined" style="font-size:14px">sync</span></span>
         <span id="syncLabel">Sincronizar Agora</span>
       </button>
     </div>
@@ -97,7 +98,7 @@ $totalClients = $db->query("SELECT COUNT(*) FROM clients")->fetchColumn();
           <p class="text-xs mt-1">
             <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold
               <?= $lastSync['status'] === 'success' ? 'bg-green-100 text-green-800' : ($lastSync['status'] === 'partial' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800') ?>">
-              <?= $lastSync['status'] === 'success' ? '✅ Sucesso' : ($lastSync['status'] === 'partial' ? '⚠️ Parcial' : '❌ Erro') ?>
+              <?= $lastSync['status'] === 'success' ? '<span class="material-symbols-outlined text-sm">check_circle</span> Sucesso' : ($lastSync['status'] === 'partial' ? '<span class="material-symbols-outlined text-sm">warning</span> Parcial' : '<span class="material-symbols-outlined text-sm">error</span> Erro') ?>
             </span>
             <span class="text-gray-400 ml-1"><?= $lastSync['duration_ms'] ?>ms</span>
           </p>
@@ -183,13 +184,13 @@ $totalClients = $db->query("SELECT COUNT(*) FROM clients")->fetchColumn();
               <td class="px-4 py-3 text-xs text-gray-600 whitespace-nowrap"><?= formatDate($log['created_at'], true) ?></td>
               <td class="px-4 py-3">
                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold <?= $log['sync_type'] === 'cron' ? 'bg-gray-100 text-gray-700' : 'bg-blue-100 text-blue-800' ?>">
-                  <?= $log['sync_type'] === 'cron' ? '⏰ Cron' : '👤 Manual' ?>
+                  <?= $log['sync_type'] === 'cron' ? '<span class="material-symbols-outlined text-sm">hourglass_empty</span> Cron' : '<span class="material-symbols-outlined text-brand">person</span> Manual' ?>
                 </span>
               </td>
               <td class="px-4 py-3">
                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold
                   <?= $log['status'] === 'success' ? 'bg-green-100 text-green-800' : ($log['status'] === 'partial' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800') ?>">
-                  <?= $log['status'] === 'success' ? '✅ Sucesso' : ($log['status'] === 'partial' ? '⚠️ Parcial' : '❌ Erro') ?>
+                  <?= $log['status'] === 'success' ? '<span class="material-symbols-outlined text-sm">check_circle</span> Sucesso' : ($log['status'] === 'partial' ? '<span class="material-symbols-outlined text-sm">warning</span> Parcial' : '<span class="material-symbols-outlined text-sm">error</span> Erro') ?>
                 </span>
               </td>
               <td class="px-4 py-3 text-xs text-gray-600">
@@ -213,7 +214,7 @@ $totalClients = $db->query("SELECT COUNT(*) FROM clients")->fetchColumn();
 
     <!-- Instruções do cron -->
     <div class="mt-6 bg-blue-50 border border-blue-200 rounded-xl p-5">
-      <h3 class="text-sm font-bold text-blue-800 mb-2">📋 Como configurar o Cron Job na HostGator</h3>
+      <h3 class="text-sm font-bold text-blue-800 mb-2 flex items-center gap-1"><span class="material-symbols-outlined text-brand">list_alt</span> Como configurar o Cron Job na HostGator</h3>
       <ol class="text-sm text-blue-700 space-y-1.5 list-decimal list-inside">
         <li>Acesse o cPanel da HostGator</li>
         <li>Vá em <strong>Cron Jobs</strong></li>
@@ -240,7 +241,7 @@ async function runSync() {
     const result = document.getElementById('syncResult');
 
     btn.disabled = true;
-    icon.textContent  = '⏳';
+    icon.innerHTML  = '<span class="material-symbols-outlined text-sm">hourglass_empty</span>';
     label.textContent = 'Sincronizando...';
     result.classList.add('hidden');
 
@@ -269,7 +270,7 @@ async function runSync() {
 
         result.innerHTML = `
             <div class="rounded-xl border ${bgClass} p-5">
-              <p class="font-bold ${txtClass} mb-3">${isOk ? '✅ Sincronização concluída!' : '❌ Sincronização com erros'} — ${data.duration}</p>
+              <p class="font-bold ${txtClass} mb-3">${isOk ? '<span class="material-symbols-outlined text-sm">check_circle</span> Sincronização concluída!' : '<span class="material-symbols-outlined text-sm">error</span> Sincronização com erros'} — ${data.duration}</p>
               <div class="grid grid-cols-3 md:grid-cols-6 gap-3 text-center text-sm">
                 <div class="bg-white rounded-lg p-2"><p class="text-xs text-gray-400">Orgs enc.</p><p class="font-bold text-blue-700">${s.orgs_found||0}</p></div>
                 <div class="bg-white rounded-lg p-2"><p class="text-xs text-gray-400">Orgs criadas</p><p class="font-bold text-green-700">+${s.orgs_created||0}</p></div>
@@ -289,7 +290,7 @@ async function runSync() {
         result.classList.remove('hidden');
     } finally {
         btn.disabled = false;
-        icon.textContent  = '🔄';
+        icon.innerHTML  = '<span class="material-symbols-outlined" style="font-size:14px">sync</span>';
         label.textContent = 'Sincronizar Agora';
     }
 }

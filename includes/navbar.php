@@ -18,7 +18,7 @@ if (!$initials) $initials = 'U';
 ?>
 
 <!-- Botão hamburguer mobile (topo da página) -->
-<div id="mobileTopBar" class="lg:hidden fixed top-0 left-0 right-0 z-40 bg-[#1e3a8a] text-white flex items-center px-4 py-3 shadow-lg">
+<div id="mobileTopBar" class="lg:hidden fixed top-0 left-0 right-0 z-40 bg-[#1B4F8C] text-white flex items-center px-4 py-3 shadow-lg">
   <button id="hamburgerBtn" onclick="toggleSidebar()" aria-label="Abrir menu"
           class="mr-3 p-1.5 rounded-lg hover:bg-white/10 transition">
     <svg id="hamburgerIcon" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -43,7 +43,7 @@ if (!$initials) $initials = 'U';
 
 <!-- Sidebar -->
 <aside id="navAside"
-       class="fixed lg:relative top-0 left-0 z-50 w-64 bg-[#1e3a8a] text-white flex flex-col h-full shadow-xl
+       class="fixed lg:relative top-0 left-0 z-50 w-64 bg-[#1B4F8C] text-white flex flex-col h-full shadow-xl
               -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out"
        style="flex-shrink:0; height:100vh;">
 
@@ -388,7 +388,7 @@ if (!$initials) $initials = 'U';
     color: #fcd34d !important;
   }
   /* Badges de operação no dashboard: legíveis no dark */
-  body.dark-mode .bg-blue-100 { background-color: #1e3a8a !important; }
+  body.dark-mode .bg-blue-100 { background-color: #1B4F8C !important; }
   body.dark-mode .text-blue-800 { color: #93c5fd !important; }
   body.dark-mode .bg-green-100 { background-color: #14532d !important; }
   body.dark-mode .text-green-800 { color: #86efac !important; }
@@ -446,7 +446,7 @@ if (!$initials) $initials = 'U';
   body.dark-mode .hover\:bg-slate-50:hover { background-color: #374151 !important; }
   body.dark-mode .placeholder\:text-slate-400::placeholder { color: #9ca3af !important; }
   /* Kanban: tags comodo/equip.cliente (bg-blue-50, bg-purple-50, bg-teal-50) */
-  body.dark-mode .bg-blue-50 { background-color: #1e3a8a !important; }
+  body.dark-mode .bg-blue-50 { background-color: #1B4F8C !important; }
   body.dark-mode .text-blue-600 { color: #93c5fd !important; }
   body.dark-mode .bg-purple-50 { background-color: #4c1d95 !important; }
   body.dark-mode .text-purple-600 { color: #c4b5fd !important; }

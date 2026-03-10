@@ -44,6 +44,7 @@ if ($userId) {
   <title>Auditoria por Usuário — TV Doutor CRM</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config={theme:{extend:{colors:{brand:{DEFAULT:'#1B4F8C',dark:'#153d6f',light:'#D6E4F0'}}}}}</script>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 </head>
 <body class="bg-gray-50 flex h-screen overflow-hidden">
 <?php require_once __DIR__ . '/../../includes/navbar.php'; ?>
@@ -52,7 +53,7 @@ if ($userId) {
     <div class="flex items-center justify-between mt-2 mb-6">
       <div>
         <a href="/pages/reports/index.php" class="text-gray-400 hover:text-gray-600 text-sm">← Relatórios</a>
-        <h1 class="text-2xl font-bold text-gray-800 mt-2">👤 Auditoria por Usuário</h1>
+        <h1 class="text-2xl font-bold text-gray-800 mt-2 flex items-center gap-2"><span class="material-symbols-outlined text-brand">person</span> Auditoria por Usuário</h1>
       </div>
       <?php if ($userId): ?>
       <?php $csvParams = http_build_query(['report'=>'by_user','user_id'=>$userId,'date_from'=>$dateFrom,'date_to'=>$dateTo,'action'=>$action]); ?>

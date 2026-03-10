@@ -69,7 +69,7 @@ ORDER BY al.created_at DESC LIMIT 50");
 $auditStmt->execute([$id]);
 $auditHistory = $auditStmt->fetchAll();
 
-$conditionMap = ['ok' => '✅ Bom estado', 'manutencao' => '🔧 Manutenção', 'descartar' => '🗑️ Descartar'];
+$conditionMap = ['ok' => '<span class="material-symbols-outlined text-sm">check_circle</span> Bom estado', 'manutencao' => '<span class="material-symbols-outlined" style="font-size:12px">build</span> Manutenção', 'descartar' => '<span class="material-symbols-outlined" style="font-size:12px">delete</span> Descartar'];
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -78,6 +78,7 @@ $conditionMap = ['ok' => '✅ Bom estado', 'manutencao' => '🔧 Manutenção', 
   <title><?= sanitize(displayTag($eq['asset_tag'], $eq['mac_address'] ?? null)) ?> — TV Doutor CRM</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config={theme:{extend:{colors:{brand:{DEFAULT:'#1B4F8C',dark:'#153d6f',light:'#D6E4F0'}}}}}</script>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 </head>
 <body class="bg-gray-50 flex h-screen overflow-hidden">
@@ -117,7 +118,7 @@ $conditionMap = ['ok' => '✅ Bom estado', 'manutencao' => '🔧 Manutenção', 
           <?php if (in_array($_SESSION['user_role'], ['admin','manager'])): ?>
           <a href="/pages/equipment/edit.php?id=<?= $id ?>"
              class="bg-brand text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-800 transition">
-            ✏️ Editar
+            <span class="material-symbols-outlined text-base">edit</span> Editar
           </a>
           <?php endif; ?>
         </div>
@@ -291,7 +292,7 @@ $conditionMap = ['ok' => '✅ Bom estado', 'manutencao' => '🔧 Manutenção', 
                 <?= kanbanLabel($h['to_status']) ?>
               </p>
               <?php if ($h['client_name']): ?>
-                <p class="text-xs text-gray-400">🏥 <?= sanitize($h['client_name']) ?></p>
+                <p class="text-xs text-gray-400"><span class="material-symbols-outlined text-brand">assignment_ind</span> <?= sanitize($h['client_name']) ?></p>
               <?php endif; ?>
               <?php if ($h['notes']): ?>
                 <p class="text-xs text-gray-400 italic"><?= sanitize($h['notes']) ?></p>

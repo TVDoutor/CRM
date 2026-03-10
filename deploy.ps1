@@ -1,10 +1,10 @@
 <#
   TV Doutor CRM - Script de Deploy Automático
-  Faz upload dos arquivos via FTP para o servidor HostGator
+  Faz upload dos arquivos diretamente via FTP para o servidor HostGator
   
   Uso:
-    .\deploy.ps1              # Deploy completo (gera zip, upload, extrai)
-    .\deploy.ps1 -SkipZip     # Só faz upload do zip existente
+    .\deploy.ps1              # Deploy completo
+    .\deploy.ps1 -SkipZip     # Só sobe arquivos (sem regerar nada)
 #>
 
 param(
@@ -33,149 +33,187 @@ Get-Content $configFile | ForEach-Object {
     }
 }
 
-$ftpHost   = $config["FTP_HOST"]
-$ftpUser   = $config["FTP_USER"]
-$ftpPass   = $config["FTP_PASS"]
-$ftpPort   = $config["FTP_PORT"]
+$ftpHost    = $config["FTP_HOST"]
+$ftpUser    = $config["FTP_USER"]
+$ftpPass    = $config["FTP_PASS"]
+$ftpPort    = $config["FTP_PORT"]
 $remotePath = $config["REMOTE_PATH"]
-$deployKey = $config["DEPLOY_KEY"]
 
 if (-not $ftpHost -or -not $ftpUser -or -not $ftpPass) {
     Write-Host "`n  ERRO: FTP_HOST, FTP_USER e FTP_PASS sao obrigatorios no .deploy-config`n" -ForegroundColor Red
     exit 1
 }
 if (-not $ftpPort) { $ftpPort = "21" }
-if (-not $remotePath) { $remotePath = "/home2/tvdout68/crm.tvdoutor.com.br" }
+if (-not $remotePath) { $remotePath = "/" }
+$remotePath = $remotePath.TrimEnd("/")
+
+$cred = New-Object System.Net.NetworkCredential($ftpUser, $ftpPass)
 
 Write-Host ""
 Write-Host "  ========================================" -ForegroundColor Cyan
-Write-Host "    TV Doutor CRM - Deploy" -ForegroundColor Cyan
+Write-Host "    TV Doutor CRM - Deploy via FTP" -ForegroundColor Cyan
 Write-Host "  ========================================" -ForegroundColor Cyan
 Write-Host "  Servidor: $ftpHost" -ForegroundColor Gray
-Write-Host "  Caminho:  $remotePath" -ForegroundColor Gray
+Write-Host "  Caminho:  $remotePath/" -ForegroundColor Gray
 Write-Host ""
 
-# --- 1. Gerar ZIP ---
-$zipPath = Join-Path $rootDir "TVDCRM_upload.zip"
-
-if (-not $SkipZip) {
-    Write-Host "  [1/4] Gerando TVDCRM_upload.zip..." -ForegroundColor Yellow
-    if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
-    Compress-Archive -Path (
-        (Join-Path $rootDir "config\*"),
-        (Join-Path $rootDir "includes\*"),
-        (Join-Path $rootDir "pages\*"),
-        (Join-Path $rootDir "index.php")
-    ) -DestinationPath $zipPath -Force
-    $zipSize = [math]::Round((Get-Item $zipPath).Length / 1KB, 1)
-    Write-Host "  OK - ZIP gerado ($zipSize KB)" -ForegroundColor Green
-} else {
-    if (-not (Test-Path $zipPath)) {
-        Write-Host "  ERRO: TVDCRM_upload.zip nao encontrado!" -ForegroundColor Red
-        exit 1
+# --- Funções FTP ---
+function FTP-EnsureDir($ftpBase, $dirPath) {
+    $parts = $dirPath -split "[/\\]" | Where-Object { $_ }
+    $current = $ftpBase
+    foreach ($p in $parts) {
+        $current = "$current/$p"
+        $uri = "ftp://${ftpHost}:${ftpPort}${current}/"
+        try {
+            $req = [System.Net.FtpWebRequest]::Create($uri)
+            $req.Method = [System.Net.WebRequestMethods+Ftp]::ListDirectory
+            $req.Credentials = $cred
+            $req.UseBinary = $true
+            $req.UsePassive = $true
+            $req.KeepAlive = $false
+            $resp = $req.GetResponse()
+            $resp.Close()
+        } catch {
+            try {
+                $mkReq = [System.Net.FtpWebRequest]::Create($uri)
+                $mkReq.Method = [System.Net.WebRequestMethods+Ftp]::MakeDirectory
+                $mkReq.Credentials = $cred
+                $mkReq.UseBinary = $true
+                $mkReq.UsePassive = $true
+                $mkReq.KeepAlive = $false
+                $mkResp = $mkReq.GetResponse()
+                $mkResp.Close()
+            } catch {}
+        }
     }
-    Write-Host "  [1/4] Usando ZIP existente (--SkipZip)" -ForegroundColor Yellow
 }
 
-# --- 2. Upload do ZIP via FTP ---
-Write-Host "  [2/4] Fazendo upload via FTP..." -ForegroundColor Yellow
+function FTP-UploadFile($localPath, $remoteFilePath) {
+    $uri = "ftp://${ftpHost}:${ftpPort}${remoteFilePath}"
+    $fileBytes = [System.IO.File]::ReadAllBytes($localPath)
+    
+    $req = [System.Net.FtpWebRequest]::Create($uri)
+    $req.Method = [System.Net.WebRequestMethods+Ftp]::UploadFile
+    $req.Credentials = $cred
+    $req.UseBinary = $true
+    $req.UsePassive = $true
+    $req.KeepAlive = $false
+    $req.ContentLength = $fileBytes.Length
 
-$ftpUri = "ftp://${ftpHost}:${ftpPort}${remotePath}/TVDCRM_upload.zip"
-$fileBytes = [System.IO.File]::ReadAllBytes($zipPath)
-
-try {
-    $ftpRequest = [System.Net.FtpWebRequest]::Create($ftpUri)
-    $ftpRequest.Method = [System.Net.WebRequestMethods+Ftp]::UploadFile
-    $ftpRequest.Credentials = New-Object System.Net.NetworkCredential($ftpUser, $ftpPass)
-    $ftpRequest.UseBinary = $true
-    $ftpRequest.UsePassive = $true
-    $ftpRequest.KeepAlive = $false
-    $ftpRequest.ContentLength = $fileBytes.Length
-
-    $stream = $ftpRequest.GetRequestStream()
+    $stream = $req.GetRequestStream()
     $stream.Write($fileBytes, 0, $fileBytes.Length)
     $stream.Close()
 
-    $response = $ftpRequest.GetResponse()
-    Write-Host "  OK - Upload concluido ($($response.StatusDescription.Trim()))" -ForegroundColor Green
-    $response.Close()
-} catch {
-    Write-Host "  ERRO no upload FTP: $($_.Exception.Message)" -ForegroundColor Red
-    exit 1
+    $resp = $req.GetResponse()
+    $resp.Close()
 }
 
-# --- 3. Upload do script de extração ---
-Write-Host "  [3/4] Enviando script de extracao..." -ForegroundColor Yellow
+# --- Coletar arquivos para deploy ---
+$deployDirs = @("config", "includes", "pages")
+$deployFiles = @("index.php")
 
-$extractPhp = @"
-<?php
-// Script temporário de deploy - auto-remove após execução
-if (($_GET['key'] ?? '') !== '$deployKey') { http_response_code(403); die('Forbidden'); }
+$allFiles = @()
 
-`$zip = new ZipArchive();
-`$zipFile = __DIR__ . '/TVDCRM_upload.zip';
-
-if (!file_exists(`$zipFile)) { die(json_encode(['error' => 'ZIP not found'])); }
-
-if (`$zip->open(`$zipFile) === true) {
-    `$zip->extractTo(__DIR__);
-    `$zip->close();
-    unlink(`$zipFile);
-    unlink(__FILE__);
-    echo json_encode(['success' => true, 'message' => 'Deploy concluido', 'time' => date('Y-m-d H:i:s')]);
-} else {
-    echo json_encode(['error' => 'Failed to extract ZIP']);
-}
-"@
-
-$extractBytes = [System.Text.Encoding]::UTF8.GetBytes($extractPhp)
-$extractUri = "ftp://${ftpHost}:${ftpPort}${remotePath}/_deploy_extract.php"
-
-try {
-    $ftpRequest2 = [System.Net.FtpWebRequest]::Create($extractUri)
-    $ftpRequest2.Method = [System.Net.WebRequestMethods+Ftp]::UploadFile
-    $ftpRequest2.Credentials = New-Object System.Net.NetworkCredential($ftpUser, $ftpPass)
-    $ftpRequest2.UseBinary = $true
-    $ftpRequest2.UsePassive = $true
-    $ftpRequest2.KeepAlive = $false
-    $ftpRequest2.ContentLength = $extractBytes.Length
-
-    $stream2 = $ftpRequest2.GetRequestStream()
-    $stream2.Write($extractBytes, 0, $extractBytes.Length)
-    $stream2.Close()
-
-    $response2 = $ftpRequest2.GetResponse()
-    Write-Host "  OK - Script de extracao enviado" -ForegroundColor Green
-    $response2.Close()
-} catch {
-    Write-Host "  ERRO ao enviar script de extracao: $($_.Exception.Message)" -ForegroundColor Red
-    exit 1
-}
-
-# --- 4. Executar extração via HTTP ---
-Write-Host "  [4/4] Extraindo arquivos no servidor..." -ForegroundColor Yellow
-
-$extractUrl = "https://crm.tvdoutor.com.br/_deploy_extract.php?key=$deployKey"
-
-try {
-    Start-Sleep -Seconds 2
-    $webResponse = Invoke-RestMethod -Uri $extractUrl -Method GET -TimeoutSec 30
-
-    if ($webResponse.success) {
-        Write-Host "  OK - $($webResponse.message) ($($webResponse.time))" -ForegroundColor Green
-    } else {
-        Write-Host "  AVISO: Resposta inesperada: $($webResponse | ConvertTo-Json)" -ForegroundColor Yellow
+foreach ($dir in $deployDirs) {
+    $dirFull = Join-Path $rootDir $dir
+    if (Test-Path $dirFull) {
+        Get-ChildItem -Path $dirFull -Recurse -File | ForEach-Object {
+            $rel = $_.FullName.Substring($rootDir.Length).Replace("\", "/")
+            $allFiles += @{ Local = $_.FullName; Remote = "$remotePath$rel" ; Rel = $rel }
+        }
     }
-} catch {
-    Write-Host "  ERRO na extracao: $($_.Exception.Message)" -ForegroundColor Red
-    Write-Host "  Tente acessar manualmente: $extractUrl" -ForegroundColor Yellow
-    exit 1
 }
+
+foreach ($f in $deployFiles) {
+    $full = Join-Path $rootDir $f
+    if (Test-Path $full) {
+        $allFiles += @{ Local = $full; Remote = "$remotePath/$f"; Rel = "/$f" }
+    }
+}
+
+$totalFiles = $allFiles.Count
+Write-Host "  Arquivos para deploy: $totalFiles" -ForegroundColor Yellow
+Write-Host ""
+
+# --- Criar diretórios remotos ---
+Write-Host "  [1/2] Criando diretorios remotos..." -ForegroundColor Yellow
+
+$remoteDirs = @()
+foreach ($f in $allFiles) {
+    $dirPart = [System.IO.Path]::GetDirectoryName($f.Remote).Replace("\", "/")
+    $relDir = $dirPart.Substring($remotePath.Length)
+    if ($relDir -and $relDir -ne "/" -and $remoteDirs -notcontains $relDir) {
+        $remoteDirs += $relDir
+    }
+}
+
+$remoteDirs = $remoteDirs | Sort-Object
+foreach ($d in $remoteDirs) {
+    FTP-EnsureDir $remotePath $d
+}
+Write-Host "  OK - $($remoteDirs.Count) diretorios verificados" -ForegroundColor Green
+
+# --- Upload dos arquivos ---
+Write-Host "  [2/2] Fazendo upload dos arquivos..." -ForegroundColor Yellow
+
+$uploaded = 0
+$failed = 0
+$errors = @()
+$startTime = Get-Date
+
+foreach ($f in $allFiles) {
+    $uploaded++
+    $pct = [math]::Round(($uploaded / $totalFiles) * 100)
+    Write-Host "`r  [$pct%] $uploaded/$totalFiles - $($f.Rel)" -NoNewline -ForegroundColor Gray
+    
+    try {
+        FTP-UploadFile $f.Local $f.Remote
+    } catch {
+        $failed++
+        $errors += "$($f.Rel): $($_.Exception.Message)"
+    }
+}
+
+$elapsed = [math]::Round(((Get-Date) - $startTime).TotalSeconds, 1)
+Write-Host ""
+
+if ($failed -gt 0) {
+    Write-Host ""
+    Write-Host "  AVISOS ($failed erros):" -ForegroundColor Yellow
+    foreach ($e in $errors) {
+        Write-Host "    - $e" -ForegroundColor Red
+    }
+}
+
+# --- Limpar script de extração se existir ---
+try {
+    $delUri = "ftp://${ftpHost}:${ftpPort}${remotePath}/_deploy_extract.php"
+    $delReq = [System.Net.FtpWebRequest]::Create($delUri)
+    $delReq.Method = [System.Net.WebRequestMethods+Ftp]::DeleteFile
+    $delReq.Credentials = $cred
+    $delReq.UsePassive = $true
+    $delReq.KeepAlive = $false
+    $delResp = $delReq.GetResponse()
+    $delResp.Close()
+} catch {}
+
+try {
+    $delUri2 = "ftp://${ftpHost}:${ftpPort}${remotePath}/TVDCRM_upload.zip"
+    $delReq2 = [System.Net.FtpWebRequest]::Create($delUri2)
+    $delReq2.Method = [System.Net.WebRequestMethods+Ftp]::DeleteFile
+    $delReq2.Credentials = $cred
+    $delReq2.UsePassive = $true
+    $delReq2.KeepAlive = $false
+    $delResp2 = $delReq2.GetResponse()
+    $delResp2.Close()
+} catch {}
 
 # --- Finalizado ---
+$success = $totalFiles - $failed
 Write-Host ""
 Write-Host "  ========================================" -ForegroundColor Green
-Write-Host "    Deploy concluido com sucesso!" -ForegroundColor Green
+Write-Host "    Deploy concluido!" -ForegroundColor Green
 Write-Host "  ========================================" -ForegroundColor Green
+Write-Host "  Arquivos: $success/$totalFiles enviados ($elapsed s)" -ForegroundColor Gray
 Write-Host "  URL: https://crm.tvdoutor.com.br" -ForegroundColor Gray
 Write-Host ""

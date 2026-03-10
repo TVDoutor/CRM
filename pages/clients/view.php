@@ -111,6 +111,7 @@ $history = $histStmt->fetchAll();
   <title><?= sanitize($client['name']) ?> — TV Doutor CRM</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config={theme:{extend:{colors:{brand:{DEFAULT:'#1B4F8C',dark:'#153d6f',light:'#D6E4F0'}}}}}</script>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 </head>
 <body class="bg-gray-50 flex h-screen overflow-hidden">
 <?php require_once __DIR__ . '/../../includes/navbar.php'; ?>
@@ -133,7 +134,7 @@ $history = $histStmt->fetchAll();
         <?php if (in_array($_SESSION['user_role'], ['admin','manager'])): ?>
         <a href="/pages/clients/edit.php?id=<?= $cid ?>"
            class="bg-brand text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-800 transition">
-          ✏️ Editar
+          <span class="material-symbols-outlined text-base">edit</span> Editar
         </a>
         <?php endif; ?>
       </div>
@@ -276,13 +277,13 @@ $history = $histStmt->fetchAll();
             <p class="text-sm font-semibold text-gray-800 truncate"><?= sanitize($proj['title']) ?></p>
             <p class="text-xs text-gray-400 mt-0.5 flex flex-wrap gap-3">
               <?php if ($proj['phase_name']): ?>
-              <span>📍 <?= sanitize($proj['phase_name']) ?></span>
+              <span><span class="material-symbols-outlined text-sm">location_on</span> <?= sanitize($proj['phase_name']) ?></span>
               <?php endif; ?>
               <?php if ($proj['start_date']): ?>
-              <span>📅 Início: <?= date('d/m/Y', strtotime($proj['start_date'])) ?></span>
+              <span><span class="material-symbols-outlined text-sm">calendar_today</span> Início: <?= date('d/m/Y', strtotime($proj['start_date'])) ?></span>
               <?php endif; ?>
               <?php if ($proj['end_date']): ?>
-              <span>🏁 Fim: <?= date('d/m/Y', strtotime($proj['end_date'])) ?></span>
+              <span><span class="material-symbols-outlined text-sm">flag</span> Fim: <?= date('d/m/Y', strtotime($proj['end_date'])) ?></span>
               <?php endif; ?>
             </p>
           </div>

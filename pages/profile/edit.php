@@ -88,7 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Meu Perfil — TV Doutor CRM</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>tailwind.config={theme:{extend:{colors:{brand:{DEFAULT:'#1e3a8a',dark:'#153d6f',light:'#dbeafe'}}}}}</script>
+  <script>tailwind.config={theme:{extend:{colors:{brand:{DEFAULT:'#1B4F8C',dark:'#153d6f',light:'#dbeafe'}}}}}</script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
   <style>body{font-family:'Inter',sans-serif;}</style>
 </head>
@@ -101,7 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <!-- Header -->
     <div class="flex items-center gap-4 mb-8">
-      <div class="w-16 h-16 rounded-full bg-[#1e3a8a] flex items-center justify-center text-white text-xl font-bold shadow-lg">
+      <div class="w-16 h-16 rounded-full bg-[#1B4F8C] flex items-center justify-center text-white text-xl font-bold shadow-lg">
         <?php
           $initials = '';
           foreach (explode(' ', trim($user['name'])) as $p) {
@@ -173,7 +173,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <div class="pt-2">
           <button type="submit"
-                  class="flex items-center gap-2 bg-[#1e3a8a] hover:bg-blue-900 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition">
+                  class="flex items-center gap-2 bg-[#1B4F8C] hover:bg-blue-900 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
             </svg>

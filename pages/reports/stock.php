@@ -49,6 +49,7 @@ $models = $db->query("SELECT id, brand, model_name FROM equipment_models WHERE i
   <title>Estoque Atual — TV Doutor CRM</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config={theme:{extend:{colors:{brand:{DEFAULT:'#1B4F8C',dark:'#153d6f',light:'#D6E4F0'}}}}}</script>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 </head>
 <body class="bg-gray-50 flex h-screen overflow-hidden">
 <?php require_once __DIR__ . '/../../includes/navbar.php'; ?>
@@ -57,7 +58,7 @@ $models = $db->query("SELECT id, brand, model_name FROM equipment_models WHERE i
     <div class="flex items-center justify-between mb-6">
       <div>
         <a href="/pages/reports/index.php" class="text-gray-400 hover:text-gray-600 text-sm">← Relatórios</a>
-        <h1 class="text-2xl font-bold text-gray-800 mt-2">📦 Estoque Atual</h1>
+        <h1 class="text-2xl font-bold text-gray-800 mt-2 flex items-center gap-2"><span class="material-symbols-outlined" style="font-size:inherit">inventory_2</span> Estoque Atual</h1>
       </div>
       <?php
         $csvParams = http_build_query(['report'=>'stock','condition_status'=>$condition,'model_id'=>$modelId,'batch'=>$batch]);

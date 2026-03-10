@@ -97,7 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm'])) {
 
             $msg = 'Saída registrada: ' . count($eqIds) . ' equipamento(s) enviado(s) para ' . $clientName . '.';
             if ($pipeErrors) {
-                $msg .= ' ⚠️ Aviso Pipedrive: ' . implode('; ', $pipeErrors);
+                $msg .= ' Aviso Pipedrive: ' . implode('; ', $pipeErrors);
             }
             flashSet('success', $msg);
             header('Location: ' . BASE_URL . '/pages/dashboard.php');
@@ -116,17 +116,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm'])) {
   <title>Saída de Equipamento — TV Doutor CRM</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config={theme:{extend:{colors:{brand:{DEFAULT:'#1B4F8C',dark:'#153d6f',light:'#D6E4F0'}}}}}</script>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 </head>
 <body class="bg-gray-50 flex h-screen overflow-hidden">
 <?php require_once __DIR__ . '/../../includes/navbar.php'; ?>
 <main class="flex-1 p-4 lg:p-8 overflow-auto pt-16 lg:pt-4">
   <div class="max-w-5xl mx-auto">
-    <h1 class="text-xl lg:text-2xl font-bold text-gray-800 mb-1">📤 Saída de Equipamento</h1>
+    <h1 class="text-xl lg:text-2xl font-bold text-gray-800 mb-1 flex items-center gap-2"><span class="material-symbols-outlined" style="font-size:inherit">call_made</span> Saída de Equipamento</h1>
     <p class="text-gray-500 text-sm mb-6">Envio de um ou mais equipamentos para um cliente</p>
 
     <?php if ($errors): ?>
     <div class="mb-5 p-4 bg-red-50 border border-red-300 rounded-lg">
-      <?php foreach ($errors as $e): ?><p class="text-sm text-red-700">❌ <?= htmlspecialchars($e) ?></p><?php endforeach; ?>
+      <?php foreach ($errors as $e): ?><p class="text-sm text-red-700"><span class="material-symbols-outlined text-sm">error</span> <?= htmlspecialchars($e) ?></p><?php endforeach; ?>
     </div>
     <?php endif; ?>
 
@@ -194,7 +195,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm'])) {
 
           <button type="submit"
                   class="w-full bg-green-600 text-white py-3 rounded-xl font-semibold text-sm hover:bg-green-700 transition">
-            ✅ Confirmar Saída
+            <span class="material-symbols-outlined text-sm">check_circle</span> Confirmar Saída
           </button>
         </div>
 

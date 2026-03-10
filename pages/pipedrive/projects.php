@@ -81,6 +81,7 @@ if ($tableExists) {
   <title>Projetos Pipedrive — TV Doutor CRM</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config={theme:{extend:{colors:{brand:{DEFAULT:'#1B4F8C',dark:'#153d6f',light:'#D6E4F0'}}}}}</script>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 </head>
 <body class="bg-gray-50 flex h-screen overflow-hidden">
 <?php require_once __DIR__ . '/../../includes/navbar.php'; ?>
@@ -102,19 +103,19 @@ if ($tableExists) {
                 id="btnUpdate"
                 class="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition"
                 title="Atualiza modelo, MAC, lote e data de compra dos equipamentos já importados">
-          <span id="updateIcon">🔧</span>
+          <span id="updateIcon"><span class="material-symbols-outlined" style="font-size:14px">build</span></span>
           <span id="updateLabel">Atualizar Dados</span>
         </button>
         <button onclick="runImport()"
                 id="btnImport"
                 class="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition">
-          <span id="importIcon">📥</span>
+          <span id="importIcon"><span class="material-symbols-outlined" style="font-size:14px">call_received</span></span>
           <span id="importLabel">Importar Equipamentos</span>
         </button>
         <button onclick="runSync()"
                 id="btnSync"
                 class="flex items-center gap-2 bg-[#0F4C81] hover:bg-blue-900 text-white px-4 py-2 rounded-lg text-sm font-semibold transition">
-          <span id="syncIcon">🔄</span>
+          <span id="syncIcon"><span class="material-symbols-outlined" style="font-size:14px">sync</span></span>
           <span id="syncLabel">Sincronizar Projetos</span>
         </button>
       </div>
@@ -128,7 +129,7 @@ if ($tableExists) {
     <?php if (!$tableExists): ?>
     <!-- Aviso de migração necessária -->
     <div class="bg-orange-50 border border-orange-200 rounded-xl p-6 mb-6">
-      <h3 class="font-bold text-orange-800 mb-2">⚠️ Configuração necessária</h3>
+      <h3 class="font-bold text-orange-800 mb-2 flex items-center gap-1"><span class="material-symbols-outlined text-sm">warning</span> Configuração necessária</h3>
       <p class="text-sm text-orange-700 mb-3">Execute o script SQL abaixo no phpMyAdmin para criar a tabela de projetos:</p>
       <div class="bg-white rounded-lg p-3 font-mono text-xs text-gray-700 border border-orange-200">
         Execute o arquivo: <strong>config/migrate_projects.sql</strong>
@@ -168,7 +169,7 @@ if ($tableExists) {
       <span>Última sincronização: <strong><?= formatDate($lastSync['created_at'], true) ?></strong></span>
       <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold
         <?= $lastSync['status'] === 'success' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' ?>">
-        <?= $lastSync['status'] === 'success' ? '✅ Sucesso' : '⚠️ Parcial' ?>
+        <?= $lastSync['status'] === 'success' ? '<span class="material-symbols-outlined text-sm">check_circle</span> Sucesso' : '<span class="material-symbols-outlined text-sm">warning</span> Parcial' ?>
       </span>
       <span><?= $lastSync['created'] ?> criados · <?= $lastSync['updated'] ?> atualizados · <?= $lastSync['duration_ms'] ?>ms</span>
     </div>
@@ -300,7 +301,7 @@ async function runSync() {
     const result = document.getElementById('syncResult');
 
     btn.disabled = true;
-    icon.textContent  = '⏳';
+    icon.innerHTML  = '<span class="material-symbols-outlined text-sm">hourglass_empty</span>';
     result.classList.remove('hidden');
 
     // Estado acumulado entre páginas
@@ -372,7 +373,7 @@ async function runSync() {
         result.innerHTML = `
           <div class="rounded-xl border ${hasErr ? 'border-yellow-200 bg-yellow-50' : 'border-green-200 bg-green-50'} p-4">
             <p class="font-bold ${hasErr ? 'text-yellow-800' : 'text-green-800'} mb-2">
-              ${hasErr ? '⚠️ Sincronizado com avisos' : '✅ Projetos sincronizados!'}
+              ${hasErr ? '<span class="material-symbols-outlined text-sm">warning</span> Sincronizado com avisos' : '<span class="material-symbols-outlined text-sm">check_circle</span> Projetos sincronizados!'}
             </p>
             <div class="flex flex-wrap gap-4 text-sm">
               <span class="text-gray-600">Total: <strong>${accTotal}</strong></span>
@@ -385,10 +386,10 @@ async function runSync() {
         setTimeout(() => window.location.reload(), 3000);
 
     } catch(e) {
-        result.innerHTML = `<div class="rounded-xl border border-red-200 bg-red-50 p-4 text-red-700 text-sm">❌ Erro: ${e.message}</div>`;
+        result.innerHTML = `<div class="rounded-xl border border-red-200 bg-red-50 p-4 text-red-700 text-sm"><span class="material-symbols-outlined text-sm">error</span> Erro: ${e.message}</div>`;
     } finally {
         btn.disabled     = false;
-        icon.textContent = '🔄';
+        icon.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px">sync</span>';
         label.textContent = 'Sincronizar Projetos';
     }
 }
@@ -402,7 +403,7 @@ async function runUpdate() {
     if (!confirm('Isso vai atualizar modelo, MAC, lote e data de compra de todos os equipamentos importados.\n\nContinuar?')) return;
 
     btn.disabled = true;
-    icon.textContent  = '⏳';
+    icon.innerHTML  = '<span class="material-symbols-outlined text-sm">hourglass_empty</span>';
     label.textContent = 'Atualizando...';
     result.classList.add('hidden');
 
@@ -423,7 +424,7 @@ async function runUpdate() {
 
         result.innerHTML = `
             <div class="rounded-xl border ${bg} p-4">
-              <p class="font-bold ${txt} mb-2">${isOk ? '✅ Equipamentos atualizados!' : '❌ Erro na atualização'} — ${data.duration}</p>
+              <p class="font-bold ${txt} mb-2">${isOk ? '<span class="material-symbols-outlined text-sm">check_circle</span> Equipamentos atualizados!' : '<span class="material-symbols-outlined text-sm">error</span> Erro na atualização'} — ${data.duration}</p>
               <p class="text-sm text-gray-700 mb-2">${data.message}</p>
               <div class="flex flex-wrap gap-4 text-sm">
                 <span class="text-gray-600">Projetos processados: <strong>${data.total_found}</strong></span>
@@ -439,7 +440,7 @@ async function runUpdate() {
         result.classList.remove('hidden');
     } finally {
         btn.disabled = false;
-        icon.textContent  = '🔧';
+        icon.innerHTML  = '<span class="material-symbols-outlined" style="font-size:14px">build</span>';
         label.textContent = 'Atualizar Dados';
     }
 }
@@ -453,7 +454,7 @@ async function runImport() {
     if (!confirm('Isso vai importar equipamentos do Pipedrive para o CRM.\nEquipamentos já existentes serão ignorados.\n\nContinuar?')) return;
 
     btn.disabled = true;
-    icon.textContent  = '⏳';
+    icon.innerHTML  = '<span class="material-symbols-outlined text-sm">hourglass_empty</span>';
     label.textContent = 'Importando...';
     result.classList.add('hidden');
 
@@ -474,7 +475,7 @@ async function runImport() {
 
         result.innerHTML = `
             <div class="rounded-xl border ${bg} p-4">
-              <p class="font-bold ${txt} mb-2">${isOk ? '✅ Importação concluída!' : '❌ Erro na importação'} — ${data.duration}</p>
+              <p class="font-bold ${txt} mb-2">${isOk ? '<span class="material-symbols-outlined text-sm">check_circle</span> Importação concluída!' : '<span class="material-symbols-outlined text-sm">error</span> Erro na importação'} — ${data.duration}</p>
               <p class="text-sm text-gray-700 mb-2">${data.message}</p>
               <div class="flex flex-wrap gap-4 text-sm">
                 <span class="text-gray-600">Projetos encontrados: <strong>${data.total_found}</strong></span>
@@ -491,7 +492,7 @@ async function runImport() {
         result.classList.remove('hidden');
     } finally {
         btn.disabled = false;
-        icon.textContent  = '📥';
+        icon.innerHTML  = '<span class="material-symbols-outlined" style="font-size:14px">call_received</span>';
         label.textContent = 'Importar Equipamentos';
     }
 }

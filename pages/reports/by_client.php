@@ -53,6 +53,7 @@ $clients = $db->query("SELECT id, client_code, name FROM clients WHERE is_active
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Relatório por Cliente — TV Doutor CRM</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
   <script>tailwind.config={theme:{extend:{colors:{brand:{DEFAULT:'#1B4F8C',dark:'#153d6f',light:'#D6E4F0'}}}}}</script>
 </head>
 <body class="bg-gray-50 flex h-screen overflow-hidden">
@@ -61,15 +62,17 @@ $clients = $db->query("SELECT id, client_code, name FROM clients WHERE is_active
   <div class="max-w-5xl mx-auto">
     <div class="flex items-center justify-between mt-2 mb-6">
       <div>
-        <a href="/pages/reports/index.php" class="text-gray-400 hover:text-gray-600 text-sm">← Relatórios</a>
-        <h1 class="text-2xl font-bold text-gray-800 mt-2">🏥 Relatório por Cliente</h1>
+        <a href="/pages/reports/index.php" class="inline-flex items-center gap-1 text-gray-400 hover:text-gray-600 text-sm">
+        <span class="material-symbols-outlined text-base">arrow_back</span> Relatórios</a>
+        <h1 class="text-2xl font-bold text-gray-800 mt-2 flex items-center gap-2">
+          <span class="material-symbols-outlined text-brand">assignment_ind</span>
+          Relatório por Cliente
+        </h1>
       </div>
       <?php if ($client): ?>
       <a href="/pages/api/export_csv.php?report=by_client&search=<?= urlencode($search) ?>"
-         class="flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-        </svg>
+         class="flex items-center gap-1.5 px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition">
+        <span class="material-symbols-outlined text-base">download</span>
         Exportar CSV
       </a>
       <?php endif; ?>
@@ -84,7 +87,9 @@ $clients = $db->query("SELECT id, client_code, name FROM clients WHERE is_active
         </option>
         <?php endforeach; ?>
       </select>
-      <button type="submit" class="bg-brand text-white text-sm px-5 py-2 rounded-lg hover:bg-blue-800 transition">Ver Relatório</button>
+      <button type="submit" class="bg-brand text-white text-sm px-5 py-2 rounded-lg hover:bg-brand-dark transition flex items-center gap-1.5">
+        <span class="material-symbols-outlined text-base">search</span> Ver Relatório
+      </button>
     </form>
 
     <?php if ($search && !$client): ?>
@@ -100,7 +105,7 @@ $clients = $db->query("SELECT id, client_code, name FROM clients WHERE is_active
         <div>
           <p class="font-mono text-xs text-gray-400 mb-1"><?= sanitize($client['client_code']) ?></p>
           <h2 class="text-xl font-bold text-gray-800"><?= sanitize($client['name']) ?></h2>
-          <div class="grid grid-cols-3 gap-4 mt-4 text-sm">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4 text-sm">
             <div><p class="text-xs text-gray-400">CNPJ</p><p><?= sanitize($client['cnpj'] ?? '—') ?></p></div>
             <div><p class="text-xs text-gray-400">Telefone</p><p><?= sanitize($client['phone'] ?? '—') ?></p></div>
             <div><p class="text-xs text-gray-400">Cidade/UF</p><p><?= sanitize($client['city'] ?? '—') ?><?= $client['state'] ? '/' . sanitize($client['state']) : '' ?></p></div>

@@ -145,6 +145,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <title>Entrada de Lote — TV Doutor CRM</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config={theme:{extend:{colors:{brand:{DEFAULT:'#1B4F8C',dark:'#153d6f',light:'#D6E4F0'}}}}}</script>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 </head>
 <body class="bg-gray-50 flex h-screen overflow-hidden">
 <?php require_once __DIR__ . '/../../includes/navbar.php'; ?>
@@ -159,7 +160,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <?php if ($errors): ?>
     <div class="mb-5 p-4 bg-red-50 border border-red-300 rounded-lg">
       <p class="text-sm font-semibold text-red-800 mb-2">Os dados do formulário foram preservados. Corrija os erros e tente novamente.</p>
-      <?php foreach ($errors as $e): ?><p class="text-sm text-red-700">❌ <?= htmlspecialchars($e) ?></p><?php endforeach; ?>
+      <?php foreach ($errors as $e): ?><p class="text-sm text-red-700"><span class="material-symbols-outlined text-sm">error</span> <?= htmlspecialchars($e) ?></p><?php endforeach; ?>
     </div>
     <?php endif; ?>
 
@@ -298,7 +299,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <div class="flex gap-3">
         <button type="submit" id="btnSubmitBatch"
                 class="bg-green-600 text-white px-8 py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition">
-          💾 Salvar Lote
+          <span class="material-symbols-outlined text-base">save</span> Salvar Lote
         </button>
         <a href="/pages/equipment/index.php"
            class="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200 transition">

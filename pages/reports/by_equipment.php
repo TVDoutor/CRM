@@ -44,7 +44,7 @@ if ($search) {
         $returns = $retStmt->fetchAll();
     }
 }
-$condMap = ['ok' => '✅ Bom estado', 'manutencao' => '🔧 Manutenção', 'descartar' => '🗑️ Descartar'];
+$condMap = ['ok' => '<span class="material-symbols-outlined text-sm">check_circle</span> Bom estado', 'manutencao' => '<span class="material-symbols-outlined" style="font-size:12px">build</span> Manutenção', 'descartar' => '<span class="material-symbols-outlined" style="font-size:12px">delete</span> Descartar'];
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -53,6 +53,7 @@ $condMap = ['ok' => '✅ Bom estado', 'manutencao' => '🔧 Manutenção', 'desc
   <title>Histórico de Equipamento — TV Doutor CRM</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config={theme:{extend:{colors:{brand:{DEFAULT:'#1B4F8C',dark:'#153d6f',light:'#D6E4F0'}}}}}</script>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 </head>
 <body class="bg-gray-50 flex h-screen overflow-hidden">
 <?php require_once __DIR__ . '/../../includes/navbar.php'; ?>
@@ -124,7 +125,7 @@ $condMap = ['ok' => '✅ Bom estado', 'manutencao' => '🔧 Manutenção', 'desc
               <?= kanbanLabel($h['to_status']) ?>
             </p>
             <?php if ($h['client_name']): ?>
-              <p class="text-xs text-gray-400">🏥 <?= sanitize($h['client_name']) ?></p>
+              <p class="text-xs text-gray-400"><span class="material-symbols-outlined text-brand">assignment_ind</span> <?= sanitize($h['client_name']) ?></p>
             <?php endif; ?>
             <p class="text-xs text-gray-300">por <?= sanitize($h['moved_by_name']) ?></p>
           </div>

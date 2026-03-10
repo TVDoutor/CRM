@@ -47,9 +47,9 @@ $summary = [];
 foreach ($sumStmt->fetchAll() as $s) $summary[$s['operation_type']] = $s;
 
 $opMeta = [
-    'ENTRADA' => ['label' => 'Entradas', 'icon' => '📦', 'cls' => 'bg-blue-100 text-blue-800'],
-    'SAIDA'   => ['label' => 'Saídas',   'icon' => '📤', 'cls' => 'bg-green-100 text-green-800'],
-    'RETORNO' => ['label' => 'Devoluções','icon' => '📥', 'cls' => 'bg-orange-100 text-orange-800'],
+    'ENTRADA' => ['label' => 'Entradas', 'icon' => '<span class="material-symbols-outlined" style="font-size:12px">inventory_2</span>', 'cls' => 'bg-blue-100 text-blue-800'],
+    'SAIDA'   => ['label' => 'Saídas',   'icon' => '<span class="material-symbols-outlined" style="font-size:12px">call_made</span>', 'cls' => 'bg-green-100 text-green-800'],
+    'RETORNO' => ['label' => 'Devoluções','icon' => '<span class="material-symbols-outlined" style="font-size:12px">call_received</span>', 'cls' => 'bg-orange-100 text-orange-800'],
 ];
 ?>
 <!DOCTYPE html>
@@ -59,6 +59,7 @@ $opMeta = [
   <title>Entradas e Saídas — TV Doutor CRM</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config={theme:{extend:{colors:{brand:{DEFAULT:'#1B4F8C',dark:'#153d6f',light:'#D6E4F0'}}}}}</script>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 </head>
 <body class="bg-gray-50 flex h-screen overflow-hidden">
 <?php require_once __DIR__ . '/../../includes/navbar.php'; ?>
@@ -67,7 +68,7 @@ $opMeta = [
     <div class="flex items-center justify-between mt-2 mb-6">
       <div>
         <a href="/pages/reports/index.php" class="text-gray-400 hover:text-gray-600 text-sm">← Relatórios</a>
-        <h1 class="text-2xl font-bold text-gray-800 mt-2">📊 Entradas e Saídas</h1>
+        <h1 class="text-2xl font-bold text-gray-800 mt-2 flex items-center gap-2"><span class="material-symbols-outlined text-brand">bar_chart</span> Entradas e Saídas</h1>
       </div>
       <?php $csvParams = http_build_query(['report'=>'entries_exits','date_from'=>$dateFrom,'date_to'=>$dateTo,'type'=>$type]); ?>
       <a href="/pages/api/export_csv.php?<?= $csvParams ?>"

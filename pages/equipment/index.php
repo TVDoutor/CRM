@@ -85,6 +85,7 @@ $garantiaProxima = $db->query("
   <title>Equipamentos — TV Doutor CRM</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config={theme:{extend:{colors:{brand:{DEFAULT:'#1B4F8C',dark:'#153d6f',light:'#D6E4F0'}}}}}</script>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 </head>
 <body class="bg-gray-50 flex h-screen overflow-hidden">
 <?php require_once __DIR__ . '/../../includes/navbar.php'; ?>
@@ -97,7 +98,7 @@ $garantiaProxima = $db->query("
       </div>
       <div class="flex flex-wrap gap-2">
         <a href="/pages/equipment/create.php" class="bg-brand text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-800 transition">+ Novo</a>
-        <a href="/pages/equipment/batch_entry.php" class="bg-green-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-green-700 transition">📦 Entrada de Lote</a>
+        <a href="/pages/equipment/batch_entry.php" class="bg-green-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-green-700 transition flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:16px">inventory_2</span> Entrada de Lote</a>
       </div>
     </div>
 
@@ -305,7 +306,7 @@ $garantiaProxima = $db->query("
     <!-- Header -->
     <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
       <div class="flex items-center gap-3">
-        <span class="text-2xl">🔔</span>
+        <span class="material-symbols-outlined text-2xl">notifications</span>
         <div>
           <h3 class="text-lg font-bold text-gray-800">Alertas de Garantia</h3>
           <p class="text-xs text-gray-400">Equipamentos que requerem atenção</p>
@@ -322,7 +323,7 @@ $garantiaProxima = $db->query("
       <div>
         <div class="flex items-center gap-2 mb-3">
           <span class="inline-flex items-center gap-1.5 bg-red-100 text-red-700 text-xs font-bold px-3 py-1 rounded-full">
-            ❌ GARANTIA VENCIDA — <?= count($garantiaVencida) ?> equipamento(s)
+            <span class="material-symbols-outlined text-sm">error</span> GARANTIA VENCIDA — <?= count($garantiaVencida) ?> equipamento(s)
           </span>
         </div>
         <div class="space-y-2">
@@ -360,7 +361,7 @@ $garantiaProxima = $db->query("
       <div>
         <div class="flex items-center gap-2 mb-3">
           <span class="inline-flex items-center gap-1.5 bg-orange-100 text-orange-700 text-xs font-bold px-3 py-1 rounded-full">
-            ⚠️ VENCE EM ATÉ 30 DIAS — <?= count($garantiaProxima) ?> equipamento(s)
+            <span class="material-symbols-outlined text-sm">warning</span> VENCE EM ATÉ 30 DIAS — <?= count($garantiaProxima) ?> equipamento(s)
           </span>
         </div>
         <div class="space-y-2">
