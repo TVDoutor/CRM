@@ -130,7 +130,7 @@ function pipedriveGet(string $endpoint, array $params = []): array {
             CURLOPT_CONNECTTIMEOUT => 15,
             CURLOPT_SSL_VERIFYPEER => true,
             CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_USERAGENT      => 'TVDoutorCRM/1.0',
+            CURLOPT_USERAGENT      => 'S8ConectCRM/1.0',
         ]);
         $resp = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -140,7 +140,7 @@ function pipedriveGet(string $endpoint, array $params = []): array {
         if ($httpCode !== 200) return ['success' => false, 'error' => "HTTP $httpCode"];
     } else {
         $ctx  = stream_context_create([
-            'http' => ['method' => 'GET', 'timeout' => 60, 'header' => "User-Agent: TVDoutorCRM/1.0\r\n"],
+            'http' => ['method' => 'GET', 'timeout' => 60, 'header' => "User-Agent: S8ConectCRM/1.0\r\n"],
             'ssl'  => ['verify_peer' => false],
         ]);
         $resp = @file_get_contents($url, false, $ctx);
@@ -201,7 +201,7 @@ function pipedrivePost(string $endpoint, array $body): array {
             CURLOPT_TIMEOUT        => 30,
             CURLOPT_CONNECTTIMEOUT => 10,
             CURLOPT_SSL_VERIFYPEER => true,
-            CURLOPT_USERAGENT      => 'TVDoutorCRM/1.0',
+            CURLOPT_USERAGENT      => 'S8ConectCRM/1.0',
         ]);
         $resp     = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -212,7 +212,7 @@ function pipedrivePost(string $endpoint, array $body): array {
     } else {
         $ctx  = stream_context_create(['http' => [
             'method'  => 'POST',
-            'header'  => "Content-Type: application/json\r\nAccept: application/json\r\nUser-Agent: TVDoutorCRM/1.0\r\n",
+            'header'  => "Content-Type: application/json\r\nAccept: application/json\r\nUser-Agent: S8ConectCRM/1.0\r\n",
             'content' => json_encode($body),
             'timeout' => 30,
         ], 'ssl' => ['verify_peer' => false]]);
@@ -241,7 +241,7 @@ function pipedrivePut(string $endpoint, array $body): array {
             CURLOPT_TIMEOUT        => 30,
             CURLOPT_CONNECTTIMEOUT => 10,
             CURLOPT_SSL_VERIFYPEER => true,
-            CURLOPT_USERAGENT      => 'TVDoutorCRM/1.0',
+            CURLOPT_USERAGENT      => 'S8ConectCRM/1.0',
         ]);
         $resp     = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -252,7 +252,7 @@ function pipedrivePut(string $endpoint, array $body): array {
     } else {
         $ctx  = stream_context_create(['http' => [
             'method'  => 'PUT',
-            'header'  => "Content-Type: application/json\r\nAccept: application/json\r\nUser-Agent: TVDoutorCRM/1.0\r\n",
+            'header'  => "Content-Type: application/json\r\nAccept: application/json\r\nUser-Agent: S8ConectCRM/1.0\r\n",
             'content' => json_encode($body),
             'timeout' => 30,
         ], 'ssl' => ['verify_peer' => false]]);

@@ -32,7 +32,7 @@ if (!$initials) $initials = 'U';
               d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
       </svg>
     </div>
-    <span class="font-bold text-sm">TV Doutor CRM</span>
+    <span class="font-bold text-sm">S8 Conect</span>
   </div>
 </div>
 
@@ -56,7 +56,7 @@ if (!$initials) $initials = 'U';
       </svg>
     </div>
     <div>
-      <h1 class="font-bold text-lg leading-tight">TV Doutor</h1>
+      <h1 class="font-bold text-lg leading-tight">S8 Conect</h1>
       <p class="text-xs text-blue-300 font-medium">CRM de Equipamentos</p>
     </div>
     <!-- Botão fechar (visível só no mobile) -->

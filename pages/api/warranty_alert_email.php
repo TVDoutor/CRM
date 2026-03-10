@@ -98,7 +98,7 @@ function buildEmailHtml(array $expiring, array $expired): string {
     </style></head><body>
     <div class="container">
         <div class="header">
-            <h1>Alerta de Garantia — TV Doutor CRM</h1>
+            <h1>Alerta de Garantia — S8 Conect CRM</h1>
             <p>Relatório gerado em ' . $date . '</p>
         </div>
         <div class="body">';
@@ -139,7 +139,7 @@ function buildEmailHtml(array $expiring, array $expired): string {
 
     $html .= '</div>
         <div class="footer">
-            TV Doutor CRM · crm.tvdoutor.com.br ·
+            S8 Conect CRM · crm.tvdoutor.com.br ·
             <a href="https://crm.tvdoutor.com.br/pages/equipment/index.php" style="color:#1B4F8C;">Ver equipamentos</a>
         </div>
     </div></body></html>';
@@ -147,9 +147,9 @@ function buildEmailHtml(array $expiring, array $expired): string {
     return $html;
 }
 
-$subject  = 'Alerta de Garantia — ' . count($expired) . ' vencidas, ' . count($expiring) . ' vencendo | TV Doutor CRM';
+$subject  = 'Alerta de Garantia — ' . count($expired) . ' vencidas, ' . count($expiring) . ' vencendo | S8 Conect CRM';
 $bodyHtml = buildEmailHtml($expiring, $expired);
-$bodyText = 'TV Doutor CRM — Alerta de Garantia (' . date('d/m/Y') . ")\n\n"
+$bodyText = 'S8 Conect CRM — Alerta de Garantia (' . date('d/m/Y') . ")\n\n"
           . 'Vencidas: ' . count($expired) . " equipamentos\n"
           . 'Vencendo (≤30 dias): ' . count($expiring) . " equipamentos\n\n"
           . "Acesse: https://crm.tvdoutor.com.br/pages/equipment/index.php";
@@ -162,7 +162,7 @@ foreach ($admins as $admin) {
     $headers = implode("\r\n", [
         'MIME-Version: 1.0',
         'Content-Type: text/html; charset=UTF-8',
-        'From: TV Doutor CRM <noreply@tvdoutor.com.br>',
+        'From: S8 Conect CRM <noreply@tvdoutor.com.br>',
         'Reply-To: noreply@tvdoutor.com.br',
         'X-Mailer: TVDoutorCRM/1.0',
     ]);

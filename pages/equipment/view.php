@@ -75,7 +75,7 @@ $conditionMap = ['ok' => '<span class="material-symbols-outlined text-sm">check_
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><?= sanitize(displayTag($eq['asset_tag'], $eq['mac_address'] ?? null)) ?> — TV Doutor CRM</title>
+  <title><?= sanitize(displayTag($eq['asset_tag'], $eq['mac_address'] ?? null)) ?> — S8 Conect CRM</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config={theme:{extend:{colors:{brand:{DEFAULT:'#1B4F8C',dark:'#153d6f',light:'#D6E4F0'}}}}}</script>
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -769,7 +769,7 @@ async function saveNote(noteId) {
     }
   </style>
   <div class="label-box">
-    <div class="label-title">TV Doutor CRM</div>
+    <div class="label-title">S8 Conect CRM</div>
     <div id="printQR"></div>
     <div class="label-tag"><?= sanitize(displayTag($eq['asset_tag'], $eq['mac_address'] ?? null)) ?></div>
     <div class="label-model"><?= sanitize($eq['brand']) ?> <?= sanitize($eq['model_name']) ?></div>
