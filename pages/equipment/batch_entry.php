@@ -322,6 +322,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               class="px-6 py-2.5 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition">
         Não
       </button>
+      <button type="button" onclick="cancelAndExit()"
+              class="px-6 py-2.5 bg-red-100 text-red-700 rounded-lg font-semibold hover:bg-red-200 transition">
+        Cancelar
+      </button>
     </div>
   </div>
 </div>
@@ -513,6 +517,13 @@ function cancelSaveBatch() {
     document.getElementById('saveConfirmModal').classList.add('hidden');
     const serials = document.querySelectorAll('input[name="serial_number[]"]');
     if (serials.length) serials[serials.length - 1].focus();
+}
+
+function cancelAndExit() {
+    _saveModalPending = false;
+    document.getElementById('saveConfirmModal').classList.add('hidden');
+    clearDraft();
+    window.location.href = '/pages/equipment/index.php';
 }
 
 function initBatchEntryNav() {
