@@ -95,6 +95,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <span id="loginText">Entrar</span>
         </button>
       </form>
+
+      <div class="mt-4 text-center">
+        <a href="<?= BASE_URL ?>/pages/forgot_password.php" class="text-sm text-brand hover:text-brand-dark font-medium inline-flex items-center gap-1 transition">
+          <span class="material-symbols-outlined text-sm">lock_reset</span>
+          Esqueceu a senha?
+        </a>
+      </div>
     </div>
 
     <p class="text-center text-blue-200 text-xs mt-6">
