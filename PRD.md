@@ -465,9 +465,9 @@ Histórico paginado de todas as operações.
 | Telefone (campo customizado) | phone |
 | Estado (campo customizado) | state |
 
-**Automação:** Cron job a cada 6 horas
+**Automação:** Cron job a cada 8 horas (3x ao dia)
 ```
-0 */6 * * * /usr/local/bin/php /home2/tvdout68/crm.tvdoutor.com.br/pages/api/pipedrive_sync.php cron
+0 */8 * * * /usr/local/bin/php /home2/tvdout68/crm.tvdoutor.com.br/pages/api/pipedrive_sync.php cron
 ```
 
 #### 5.7.2 Sincronização de Projetos e Kanban (`/pipedrive/projects.php`)
@@ -604,7 +604,7 @@ Histórico paginado de todas as operações.
 | Database | tvdout68_crm |
 | Domínio | crm.tvdoutor.com.br |
 | Deploy | Upload via FTP/cPanel (arquivo ZIP) |
-| Cron | cPanel Cron Jobs, frequência 6h |
+| Cron | cPanel Cron Jobs, frequência 8h (3x ao dia) |
 
 **Arquivo de deploy:** `TVDCRM_upload.zip` (~117 KB) — contém todas as pastas `config/`, `includes/`, `pages/` e `index.php`.
 

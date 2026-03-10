@@ -108,9 +108,9 @@ $totalClients = $db->query("SELECT COUNT(*) FROM clients")->fetchColumn();
       <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
         <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">Cron Job (HostGator)</p>
         <p class="text-xs font-mono bg-gray-50 rounded p-2 mt-1 text-gray-600 break-all">
-          0 */6 * * * php <?= BASE_URL ?>/pages/api/pipedrive_sync.php?cron_key=<?= PIPEDRIVE_CRON_KEY ?>
+          0 */8 * * * php <?= BASE_URL ?>/pages/api/pipedrive_sync.php?cron_key=<?= PIPEDRIVE_CRON_KEY ?>
         </p>
-        <p class="text-xs text-gray-400 mt-1">Executa a cada 6 horas</p>
+        <p class="text-xs text-gray-400 mt-1">Executa a cada 8 horas (3x ao dia)</p>
       </div>
     </div>
 
@@ -217,7 +217,7 @@ $totalClients = $db->query("SELECT COUNT(*) FROM clients")->fetchColumn();
       <ol class="text-sm text-blue-700 space-y-1.5 list-decimal list-inside">
         <li>Acesse o cPanel da HostGator</li>
         <li>Vá em <strong>Cron Jobs</strong></li>
-        <li>Em "Adicionar novo cron job", selecione a frequência desejada (ex: a cada 6 horas)</li>
+        <li>Em "Adicionar novo cron job", selecione a frequência desejada (a cada 8 horas — 3x ao dia)</li>
         <li>No campo comando, coloque:</li>
       </ol>
       <div class="mt-2 bg-white rounded-lg p-3 font-mono text-xs text-gray-700 border border-blue-200 break-all">
