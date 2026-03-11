@@ -198,18 +198,23 @@ foreach ($pageProjects as $proj) {
                 $needClientUpdate = ($clientId !== null && (int)($eq['current_client_id'] ?? 0) !== $clientId);
 
                 if ($needUpdate || $needClientUpdate) {
+                    $uid = $performedBy ?? (int)$db->query("SELECT id FROM users ORDER BY id LIMIT 1")->fetchColumn();
                     if ($needUpdate) $stmtUpdEq->execute([$kanbanStatus, $eq['id']]);
                     if ($needClientUpdate) {
-                        $uid = $performedBy ?? (int)$db->query("SELECT id FROM users ORDER BY id LIMIT 1")->fetchColumn();
                         $db->prepare("UPDATE equipment SET current_client_id=?, updated_by=? WHERE id=?")
                            ->execute([$clientId, $uid, $eq['id']]);
                     }
-                    if ($needUpdate) {
+                    // Registrar em kanban_history para o Histórico de Clientes e Locais
+                    if ($needClientUpdate || $needUpdate) {
                         $pageKanban++;
                         try {
+                            $toStatus = $needUpdate ? $kanbanStatus : $eq['kanban_status'];
+                            $db->prepare("INSERT INTO kanban_history (equipment_id, from_status, to_status, client_id, moved_by, notes)
+                                VALUES (?,?,?,?,?,?)")
+                               ->execute([$eq['id'], $eq['kanban_status'], $toStatus, $clientId, $uid, "Sync Pipedrive (fase: {$phaseName})"]);
                             auditLog('kanban_move', 'equipment', (int)$eq['id'],
-                                ['kanban_status' => $eq['kanban_status']],
-                                ['kanban_status' => $kanbanStatus],
+                                ['kanban_status' => $eq['kanban_status'], 'client_id' => $eq['current_client_id']],
+                                ['kanban_status' => $toStatus, 'client_id' => $clientId],
                                 "Sync Pipedrive (fase: {$phaseName})");
                         } catch (\Exception $ae) {}
                     }

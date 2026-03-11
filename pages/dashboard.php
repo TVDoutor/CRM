@@ -379,7 +379,7 @@ $totalAlertas = count($maintRows) + count($warrantyExpiring) + $totalLicRemovida
             <?php foreach ($modelRows as $m): ?>
             <div class="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
               <div class="min-w-0">
-                <p class="text-sm font-medium text-gray-700 truncate"><?= sanitize($m['brand']) ?> <?= sanitize($m['model_name']) ?></p>
+                <p class="text-sm font-medium text-gray-700 truncate"><?= sanitize(displayModelName($m['brand'], $m['model_name'])) ?></p>
                 <p class="text-[11px] text-gray-400"><?= (int)$m['novos'] ?> novos · <?= (int)$m['usados'] ?> usados</p>
               </div>
               <span class="text-lg font-bold text-brand ml-2 shrink-0"><?= (int)$m['total'] ?></span>

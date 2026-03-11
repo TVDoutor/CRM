@@ -132,10 +132,16 @@ $history = $histStmt->fetchAll();
           </span>
         </div>
         <?php if (in_array($_SESSION['user_role'], ['admin','manager'])): ?>
-        <a href="/pages/clients/edit.php?id=<?= $cid ?>"
-           class="bg-brand text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-800 transition">
-          <span class="material-symbols-outlined text-base">edit</span> Editar
-        </a>
+        <div class="flex gap-2">
+          <a href="/pages/clients/edit.php?id=<?= $cid ?>"
+             class="bg-brand text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-800 transition flex items-center gap-1">
+            <span class="material-symbols-outlined text-base">edit</span> Editar
+          </a>
+          <a href="/pages/clients/merge.php?from=<?= urlencode($client['client_code']) ?>"
+             class="bg-amber-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-amber-700 transition flex items-center gap-1">
+            <span class="material-symbols-outlined text-base">merge</span> Mesclar
+          </a>
+        </div>
         <?php endif; ?>
       </div>
 
@@ -232,7 +238,7 @@ $history = $histStmt->fetchAll();
                   <a href="/pages/equipment/view.php?id=<?= $e['id'] ?>"
                      class="font-mono font-semibold text-brand hover:underline"><?= sanitize(displayTag($e['asset_tag'], $e['mac_address'] ?? null)) ?></a>
                 </td>
-                <td class="py-2 text-gray-600"><?= sanitize($e['brand']) ?> <?= sanitize($e['model_name']) ?></td>
+                <td class="py-2 text-gray-600"><?= sanitize(displayModelName($e['brand'], $e['model_name'])) ?></td>
                 <td class="py-2"><?= conditionBadge($e['condition_status']) ?></td>
                 <td class="py-2 text-gray-500 text-xs"><?= contractLabel($e['contract_type']) ?></td>
                 <td class="py-2 font-semibold text-brand"><?= isset($e['days_allocated']) && $e['days_allocated'] !== null ? (int)$e['days_allocated'] . ' dias' : '—' ?></td>
@@ -325,7 +331,7 @@ $history = $histStmt->fetchAll();
                   <a href="/pages/equipment/view.php?id=<?= $h['id'] ?>"
                      class="font-mono font-semibold text-brand hover:underline"><?= sanitize(displayTag($h['asset_tag'], $h['mac_address'] ?? null)) ?></a>
                 </td>
-                <td class="py-2 text-gray-600"><?= sanitize($h['brand']) ?> <?= sanitize($h['model_name']) ?></td>
+                <td class="py-2 text-gray-600"><?= sanitize(displayModelName($h['brand'], $h['model_name'])) ?></td>
                 <td class="py-2 text-gray-500"><?= formatDate($h['first_allocation'], true) ?></td>
                 <td class="py-2 text-gray-500"><?= $h['returned_at'] ? formatDate($h['returned_at'], true) : '<span class="text-green-600 font-medium">Alocado</span>' ?></td>
               </tr>

@@ -17,21 +17,36 @@ $columns = [
     'baixado'               => ['label' => 'Baixado',              'icon' => 'delete',           'color' => 'text-gray-500',   'border' => 'border-l-gray-400'],
 ];
 
-$stmt = $db->query("SELECT e.id, e.asset_tag, e.mac_address, e.serial_number, e.kanban_status, e.condition_status,
-    e.contract_type, e.current_client_id, e.purchase_date,
-    em.brand, em.model_name,
-    c.name as client_name, c.client_code,
-    (SELECT GROUP_CONCAT(DISTINCT pp.client_code) FROM pipedrive_projects pp
-     WHERE pp.client_id = e.current_client_id AND pp.client_code IS NOT NULL AND pp.client_code != '') as pipe_client_codes
-FROM equipment e
-JOIN equipment_models em ON em.id = e.model_id
-LEFT JOIN clients c ON c.id = e.current_client_id
-ORDER BY e.asset_tag ASC");
+// Tenta incluir custom_labels (execute config/migrate_labels.sql se a coluna não existir)
+try {
+    $stmt = $db->query("SELECT e.id, e.asset_tag, e.mac_address, e.serial_number, e.kanban_status, e.condition_status,
+        e.contract_type, e.current_client_id, e.purchase_date, e.custom_labels,
+        em.brand, em.model_name,
+        c.name as client_name, c.client_code,
+        (SELECT GROUP_CONCAT(DISTINCT pp.client_code) FROM pipedrive_projects pp
+         WHERE pp.client_id = e.current_client_id AND pp.client_code IS NOT NULL AND pp.client_code != '') as pipe_client_codes
+    FROM equipment e
+    JOIN equipment_models em ON em.id = e.model_id
+    LEFT JOIN clients c ON c.id = e.current_client_id
+    ORDER BY e.asset_tag ASC");
+} catch (\Exception $e) {
+    $stmt = $db->query("SELECT e.id, e.asset_tag, e.mac_address, e.serial_number, e.kanban_status, e.condition_status,
+        e.contract_type, e.current_client_id, e.purchase_date,
+        em.brand, em.model_name,
+        c.name as client_name, c.client_code,
+        (SELECT GROUP_CONCAT(DISTINCT pp.client_code) FROM pipedrive_projects pp
+         WHERE pp.client_id = e.current_client_id AND pp.client_code IS NOT NULL AND pp.client_code != '') as pipe_client_codes
+    FROM equipment e
+    JOIN equipment_models em ON em.id = e.model_id
+    LEFT JOIN clients c ON c.id = e.current_client_id
+    ORDER BY e.asset_tag ASC");
+}
 
 $byStatus = [];
 foreach ($columns as $k => $v) $byStatus[$k] = [];
 
 foreach ($stmt->fetchAll() as $eq) {
+    if (!isset($eq['custom_labels'])) $eq['custom_labels'] = null;
     $s = $eq['kanban_status'];
     if (isset($byStatus[$s])) $byStatus[$s][] = $eq;
 }
@@ -204,6 +219,8 @@ try {
               // Lookup Pipedrive: busca pelos últimos 6 dígitos do MAC/asset_tag
               $assetKey   = macLast6($eq['asset_tag']);
               $pipeData   = $pipeProjects[$assetKey] ?? null;
+              $eqLabels   = parseEquipmentLabels($eq['custom_labels'] ?? null);
+              $eqLabelsStr = implode(' ', $eqLabels);
             ?>
             <div class="kanban-card bg-white p-3 rounded-lg shadow-sm border border-slate-200
                         hover:shadow-md transition flex flex-col gap-1.5
@@ -211,7 +228,7 @@ try {
                  draggable="true"
                  data-id="<?= $eq['id'] ?>"
                  data-status="<?= $eq['kanban_status'] ?>"
-                 data-search="<?= strtolower(htmlspecialchars(($eq['asset_tag'] ?? '') . ' ' . (!empty($eq['mac_address']) ? macLast6($eq['mac_address']) : '') . ' ' . $eq['brand'] . ' ' . $eq['model_name'] . ' ' . ($eq['client_name'] ?? '') . ' ' . ($eq['client_code'] ?? '') . ' ' . ($eq['pipe_client_codes'] ?? '') . ' ' . ($pipeData['client_code'] ?? '') . ' ' . ($pipeData['title'] ?? ''))) ?>"
+                 data-search="<?= strtolower(htmlspecialchars(($eq['asset_tag'] ?? '') . ' ' . ($eq['serial_number'] ?? '') . ' ' . (!empty($eq['mac_address']) ? (normalizeMac($eq['mac_address']) . ' ' . macLast6($eq['mac_address'])) : '') . ' ' . displayTag($eq['asset_tag'] ?? null, $eq['mac_address'] ?? null) . ' ' . displayModelName($eq['brand'], $eq['model_name']) . ' ' . $eqLabelsStr . ' ' . ($eq['client_name'] ?? '') . ' ' . ($eq['client_code'] ?? '') . ' ' . ($eq['pipe_client_codes'] ?? '') . ' ' . ($pipeData['client_code'] ?? '') . ' ' . ($pipeData['title'] ?? ''))) ?>"
                  ondragstart="handleDragStart(event)">
 
               <div class="flex justify-between items-start gap-1">
@@ -226,7 +243,7 @@ try {
               </div>
 
               <p class="text-xs text-slate-600 font-medium truncate">
-                <?= sanitize($eq['brand']) ?> <?= sanitize($eq['model_name']) ?>
+                <?= sanitize(displayModelName($eq['brand'], $eq['model_name'])) ?>
               </p>
 
               <?php if ($eq['client_name']): ?>
@@ -249,6 +266,16 @@ try {
                 <span class="text-[10px] px-1.5 py-0.5 rounded font-medium <?= $ctColor ?>">
                   <?= contractLabel($eq['contract_type']) ?>
                 </span>
+              </div>
+              <?php endif; ?>
+
+              <?php if (!empty($eqLabels)): ?>
+              <div class="flex flex-wrap gap-1">
+                <?php foreach ($eqLabels as $lbl): ?>
+                <span class="text-[10px] px-1.5 py-0.5 rounded font-medium bg-slate-100 text-slate-700 border border-slate-200">
+                  <?= htmlspecialchars($lbl) ?>
+                </span>
+                <?php endforeach; ?>
               </div>
               <?php endif; ?>
 
@@ -317,15 +344,24 @@ try {
             <?php else: ?>
             <div class="divide-y divide-slate-100">
               <?php foreach ($cards as $eq):
-                $assetKeyL = macLast6($eq['asset_tag']);
-                $pipeDataL = $pipeProjects[$assetKeyL] ?? null;
+                $assetKeyL   = macLast6($eq['asset_tag']);
+                $pipeDataL   = $pipeProjects[$assetKeyL] ?? null;
+                $eqLabelsL   = parseEquipmentLabels($eq['custom_labels'] ?? null);
+                $eqLabelsLStr = implode(' ', $eqLabelsL);
               ?>
               <a href="/pages/equipment/view.php?id=<?= $eq['id'] ?>"
                  class="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition list-card"
-                 data-search="<?= strtolower(htmlspecialchars(($eq['asset_tag'] ?? '') . ' ' . (!empty($eq['mac_address']) ? macLast6($eq['mac_address']) : '') . ' ' . $eq['brand'] . ' ' . $eq['model_name'] . ' ' . ($eq['client_name'] ?? '') . ' ' . ($eq['client_code'] ?? '') . ' ' . ($eq['pipe_client_codes'] ?? '') . ' ' . ($pipeDataL['client_code'] ?? '') . ' ' . ($pipeDataL['title'] ?? ''))) ?>">
+                 data-search="<?= strtolower(htmlspecialchars(($eq['asset_tag'] ?? '') . ' ' . ($eq['serial_number'] ?? '') . ' ' . (!empty($eq['mac_address']) ? (normalizeMac($eq['mac_address']) . ' ' . macLast6($eq['mac_address'])) : '') . ' ' . displayTag($eq['asset_tag'] ?? null, $eq['mac_address'] ?? null) . ' ' . displayModelName($eq['brand'], $eq['model_name']) . ' ' . $eqLabelsLStr . ' ' . ($eq['client_name'] ?? '') . ' ' . ($eq['client_code'] ?? '') . ' ' . ($eq['pipe_client_codes'] ?? '') . ' ' . ($pipeDataL['client_code'] ?? '') . ' ' . ($pipeDataL['title'] ?? ''))) ?>">
                 <div class="flex-1 min-w-0">
                   <p class="font-mono font-bold text-sm text-primary"><?= sanitize(displayTag($eq['asset_tag'], $eq['mac_address'] ?? null)) ?></p>
-                  <p class="text-xs text-slate-500 truncate"><?= sanitize($eq['brand']) ?> <?= sanitize($eq['model_name']) ?></p>
+                  <p class="text-xs text-slate-500 truncate"><?= sanitize(displayModelName($eq['brand'], $eq['model_name'])) ?></p>
+                  <?php if (!empty($eqLabelsL)): ?>
+                  <div class="flex flex-wrap gap-1 mt-1">
+                    <?php foreach ($eqLabelsL as $lbl): ?>
+                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600"><?= htmlspecialchars($lbl) ?></span>
+                    <?php endforeach; ?>
+                  </div>
+                  <?php endif; ?>
                   <?php if ($eq['client_name']): ?>
                   <p class="text-xs text-slate-400 truncate"><?= sanitize($eq['client_name']) ?></p>
                   <?php endif; ?>

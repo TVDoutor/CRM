@@ -297,7 +297,7 @@ $kanbanBadgeMap = [
                   <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500">
                     <span class="flex items-center gap-1">
                       <span class="material-symbols-outlined" style="font-size:13px">devices</span>
-                      <?= sanitize($eq['brand']) ?> <?= sanitize($eq['model_name']) ?>
+                      <?= sanitize(displayModelName($eq['brand'], $eq['model_name'])) ?>
                     </span>
                     <?php if ($days !== null): ?>
                     <span class="flex items-center gap-1 <?= $daysColor ?> font-medium">

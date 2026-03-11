@@ -128,7 +128,7 @@ $garantiaProxima = $db->query("
           <option value="">Modelo</option>
           <?php foreach ($models as $m): ?>
           <option value="<?= $m['id'] ?>" <?= $modelId === (int)$m['id'] ? 'selected' : '' ?>>
-            <?= sanitize($m['brand']) ?> <?= sanitize($m['model_name']) ?>
+            <?= sanitize(displayModelName($m['brand'], $m['model_name'])) ?>
           </option>
           <?php endforeach; ?>
         </select>
@@ -171,9 +171,7 @@ $garantiaProxima = $db->query("
             <?php endif; ?>
             <?php foreach ($rows as $r):
               // Modelo: evita repetir marca se já está no model_name
-              $modelDisplay = (stripos($r['model_name'], $r['brand']) !== false)
-                ? $r['model_name']
-                : $r['brand'] . ' ' . $r['model_name'];
+              $modelDisplay = displayModelName($r['brand'], $r['model_name']);
             ?>
             <tr class="hover:bg-blue-50/30 transition group">
 
@@ -336,7 +334,7 @@ $garantiaProxima = $db->query("
                 <?= sanitize(displayTag($g['asset_tag'], $g['mac_address'] ?? null)) ?>
               </a>
               <p class="text-xs text-gray-600 mt-0.5">
-                <?= sanitize($g['brand']) ?> <?= sanitize($g['model_name']) ?>
+                <?= sanitize(displayModelName($g['brand'], $g['model_name'])) ?>
               </p>
               <p class="text-xs text-gray-400">
                 Compra: <?= date('d/m/Y', strtotime($g['purchase_date'])) ?> ·
@@ -374,7 +372,7 @@ $garantiaProxima = $db->query("
                 <?= sanitize(displayTag($g['asset_tag'], $g['mac_address'] ?? null)) ?>
               </a>
               <p class="text-xs text-gray-600 mt-0.5">
-                <?= sanitize($g['brand']) ?> <?= sanitize($g['model_name']) ?>
+                <?= sanitize(displayModelName($g['brand'], $g['model_name'])) ?>
               </p>
               <p class="text-xs text-gray-400">
                 Compra: <?= date('d/m/Y', strtotime($g['purchase_date'])) ?> ·

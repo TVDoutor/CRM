@@ -396,7 +396,7 @@ if ($action === 'view' && $batch) {
               </a>
             </td>
             <td class="px-4 py-2.5 text-gray-600 hidden md:table-cell">
-              <?= sanitize($eq['brand']) ?> <?= sanitize($eq['model_name']) ?>
+              <?= sanitize(displayModelName($eq['brand'], $eq['model_name'])) ?>
             </td>
             <td class="px-4 py-2.5 text-gray-500 text-xs hidden sm:table-cell">
               <?= sanitize($eq['client_name'] ?? '—') ?>

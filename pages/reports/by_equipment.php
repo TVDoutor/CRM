@@ -94,7 +94,7 @@ $condMap = ['ok' => '<span class="material-symbols-outlined text-sm">check_circl
       <div class="flex items-start justify-between">
         <div>
           <p class="font-mono text-2xl font-bold text-brand mb-1"><?= sanitize(displayTag($eq['asset_tag'], $eq['mac_address'] ?? null)) ?></p>
-          <p class="text-gray-600"><?= sanitize($eq['brand']) ?> <?= sanitize($eq['model_name']) ?></p>
+          <p class="text-gray-600"><?= sanitize(displayModelName($eq['brand'], $eq['model_name'])) ?></p>
           <div class="flex gap-2 mt-2">
             <?= conditionBadge($eq['condition_status']) ?>
             <?= kanbanBadge($eq['kanban_status']) ?>

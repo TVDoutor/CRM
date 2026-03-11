@@ -35,7 +35,7 @@ $usados = $total - $novos;
 // Por modelo
 $byModel = [];
 foreach ($rows as $r) {
-    $k = $r['brand'] . ' ' . $r['model_name'];
+    $k = displayModelName($r['brand'], $r['model_name']);
     if (!isset($byModel[$k])) $byModel[$k] = ['novos' => 0, 'usados' => 0];
     $byModel[$k][$r['condition_status'] === 'novo' ? 'novos' : 'usados']++;
 }
@@ -116,7 +116,7 @@ $models = $db->query("SELECT id, brand, model_name FROM equipment_models WHERE i
           <option value="">Todos os modelos</option>
           <?php foreach ($models as $m): ?>
           <option value="<?= $m['id'] ?>" <?= $modelId === (int)$m['id'] ? 'selected' : '' ?>>
-            <?= sanitize($m['brand']) ?> <?= sanitize($m['model_name']) ?>
+            <?= sanitize(displayModelName($m['brand'], $m['model_name'])) ?>
           </option>
           <?php endforeach; ?>
         </select>
@@ -152,7 +152,7 @@ $models = $db->query("SELECT id, brand, model_name FROM equipment_models WHERE i
             <?php foreach ($rows as $r): ?>
             <tr class="hover:bg-gray-50">
               <td class="px-4 py-2.5 font-mono font-semibold text-brand text-xs"><?= sanitize(displayTag($r['asset_tag'], $r['mac_address'] ?? null)) ?></td>
-              <td class="px-4 py-2.5 text-gray-700 text-xs"><?= sanitize($r['brand']) ?> <?= sanitize($r['model_name']) ?></td>
+              <td class="px-4 py-2.5 text-gray-700 text-xs"><?= sanitize(displayModelName($r['brand'], $r['model_name'])) ?></td>
               <td class="px-4 py-2.5 font-mono text-xs text-gray-400"><?= sanitize($r['serial_number'] ?? '—') ?></td>
               <td class="px-4 py-2.5 font-mono text-xs text-gray-400"><?= sanitize($r['mac_address'] ?? '—') ?></td>
               <td class="px-4 py-2.5"><?= conditionBadge($r['condition_status']) ?></td>

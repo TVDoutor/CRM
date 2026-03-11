@@ -111,7 +111,7 @@ function buildEmailHtml(array $expiring, array $expired): string {
         foreach ($expired as $e) {
             $html .= '<tr>
                 <td class="tag">' . htmlspecialchars($e['asset_tag']) . '</td>
-                <td>' . htmlspecialchars($e['brand'] . ' ' . $e['model_name']) . '</td>
+                <td>' . htmlspecialchars(displayModelName($e['brand'], $e['model_name'])) . '</td>
                 <td>' . htmlspecialchars($e['client_name'] ?? '—') . '</td>
                 <td>' . $e['expires'] . '</td>
                 <td class="days-red">' . $e['days'] . ' dias</td>
@@ -128,7 +128,7 @@ function buildEmailHtml(array $expiring, array $expired): string {
         foreach ($expiring as $e) {
             $html .= '<tr>
                 <td class="tag">' . htmlspecialchars($e['asset_tag']) . '</td>
-                <td>' . htmlspecialchars($e['brand'] . ' ' . $e['model_name']) . '</td>
+                <td>' . htmlspecialchars(displayModelName($e['brand'], $e['model_name'])) . '</td>
                 <td>' . htmlspecialchars($e['client_name'] ?? '—') . '</td>
                 <td>' . $e['expires'] . '</td>
                 <td class="days-orange">' . $e['days'] . ' dias</td>

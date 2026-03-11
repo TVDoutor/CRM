@@ -149,7 +149,7 @@ $clients = $db->query("SELECT id, client_code, name FROM clients WHERE is_active
                 <a href="/pages/equipment/view.php?id=<?= $e['id'] ?>"
                    class="font-mono font-semibold text-brand hover:underline text-xs"><?= sanitize(displayTag($e['asset_tag'], $e['mac_address'] ?? null)) ?></a>
               </td>
-              <td class="py-2 text-xs text-gray-600"><?= sanitize($e['brand']) ?> <?= sanitize($e['model_name']) ?></td>
+              <td class="py-2 text-xs text-gray-600"><?= sanitize(displayModelName($e['brand'], $e['model_name'])) ?></td>
               <td class="py-2"><?= conditionBadge($e['condition_status']) ?></td>
               <td class="py-2 text-xs text-gray-500"><?= contractLabel($e['contract_type']) ?></td>
               <td class="py-2 text-right font-bold text-brand text-xs"><?= (int)$e['days_allocated'] ?></td>
@@ -184,7 +184,7 @@ $clients = $db->query("SELECT id, client_code, name FROM clients WHERE is_active
                 <a href="/pages/equipment/view.php?id=<?= $h['id'] ?>"
                    class="font-mono font-semibold text-brand hover:underline text-xs"><?= sanitize(displayTag($h['asset_tag'], $h['mac_address'] ?? null)) ?></a>
               </td>
-              <td class="py-2 text-xs text-gray-600"><?= sanitize($h['brand']) ?> <?= sanitize($h['model_name']) ?></td>
+              <td class="py-2 text-xs text-gray-600"><?= sanitize(displayModelName($h['brand'], $h['model_name'])) ?></td>
               <td class="py-2 text-xs text-gray-500"><?= formatDate($h['first_allocation'], true) ?></td>
               <td class="py-2 text-xs"><?= $h['returned_at'] ? formatDate($h['returned_at'], true) : '<span class="text-green-600 font-medium">Alocado</span>' ?></td>
             </tr>

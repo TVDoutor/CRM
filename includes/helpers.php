@@ -108,6 +108,34 @@ function kanbanBadge(string $s): string {
     return '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ' . $cls . '">' . htmlspecialchars($label) . '</span>';
 }
 
+/**
+ * Lista de etiquetas disponíveis para equipamentos (exibidas no Kanban).
+ */
+function equipmentLabels(): array {
+    return [
+        '2º ENVIO',
+        'CANCELADO',
+        'CHURN',
+        'COBRANÇA FINANCEIRO',
+        'ENCAMINHADO AO CS',
+        'CÓDIGO REVERSO',
+        'INSTÁVEL',
+        'HARDWARE DO CLIENTE',
+        'EVENTOS',
+        'NÃO DEVOLVIDO',
+        'PERDIDO PELO CLIENTE',
+    ];
+}
+
+/**
+ * Retorna array de etiquetas do equipamento a partir do JSON em custom_labels.
+ */
+function parseEquipmentLabels(?string $json): array {
+    if (!$json || trim($json) === '') return [];
+    $arr = json_decode($json, true);
+    return is_array($arr) ? array_values(array_filter($arr, 'is_string')) : [];
+}
+
 function contractLabel(?string $t): string {
     if ($t === null) return '—';
     return [
@@ -123,6 +151,19 @@ function roleLabel(string $r): string {
         'manager' => 'Gerente',
         'user'    => 'Usuário',
     ][$r] ?? $r;
+}
+
+/**
+ * Retorna marca + modelo para exibição, sem duplicar a marca quando já consta no model_name.
+ */
+function displayModelName(?string $brand, ?string $modelName): string {
+    $b = trim($brand ?? '');
+    $m = trim($modelName ?? '');
+    if (!$b && !$m) return '—';
+    if (!$b) return $m;
+    if (!$m) return $b;
+    if (stripos($m, $b) !== false) return $m;
+    return $b . ' ' . $m;
 }
 
 function sanitize(string $v): string {

@@ -227,7 +227,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               <option value="">Selecione...</option>
               <?php foreach ($models as $m): ?>
               <option value="<?= $m['id'] ?>" <?= (int)($_POST['model_id'] ?? 0) === (int)$m['id'] ? 'selected' : '' ?>>
-                <?= sanitize($m['brand']) ?> <?= sanitize($m['model_name']) ?>
+                <?= sanitize(displayModelName($m['brand'], $m['model_name'])) ?>
               </option>
               <?php endforeach; ?>
             </select>

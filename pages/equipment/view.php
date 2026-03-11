@@ -8,7 +8,7 @@ $id = (int)($_GET['id'] ?? 0);
 if (!$id) { header('Location: ' . BASE_URL . '/pages/equipment/index.php'); exit; }
 
 $stmt = $db->prepare("SELECT e.*, em.brand, em.model_name, em.category,
-    c.name as client_name, c.client_code, c.id as client_id
+    c.name as client_name, c.client_code, c.id as client_id, c.city as client_city, c.state as client_state
 FROM equipment e
 JOIN equipment_models em ON em.id = e.model_id
 LEFT JOIN clients c ON c.id = e.current_client_id
@@ -19,7 +19,7 @@ if (!$eq) { flashSet('error', 'Equipamento não encontrado.'); header('Location:
 
 // Histórico de status
 $histStmt = $db->prepare("SELECT kh.moved_at, kh.from_status, kh.to_status, kh.notes,
-    u.name as moved_by_name, c.name as client_name, c.client_code
+    u.name as moved_by_name, c.name as client_name, c.client_code, c.city, c.state
 FROM kanban_history kh
 JOIN users u ON u.id = kh.moved_by
 LEFT JOIN clients c ON c.id = kh.client_id
@@ -90,6 +90,70 @@ try {
 // Lotes para edição do campo lote
 $batches = $db->query("SELECT id, name FROM batches ORDER BY created_at DESC")->fetchAll();
 
+// Histórico de Clientes e Locais (vida do equipamento)
+$clientHistStmt = $db->prepare("SELECT kh.moved_at, kh.from_status, kh.to_status, kh.client_id, kh.notes,
+    c.name as client_name, c.client_code, c.city, c.state,
+    u.name as moved_by_name,
+    CASE
+        WHEN kh.to_status IN ('alocado','aguardando_instalacao') AND kh.client_id IS NOT NULL THEN 'alocacao'
+        WHEN kh.from_status IN ('alocado','licenca_removida','processo_devolucao')
+             AND kh.to_status NOT IN ('alocado','licenca_removida','processo_devolucao') AND kh.client_id IS NOT NULL THEN 'devolucao'
+        ELSE NULL
+    END as tipo
+FROM kanban_history kh
+LEFT JOIN clients c ON c.id = kh.client_id
+LEFT JOIN users u ON u.id = kh.moved_by
+WHERE kh.equipment_id = ? AND kh.client_id IS NOT NULL
+ORDER BY kh.moved_at ASC");
+$clientHistStmt->execute([$id]);
+$clientHistoryRaw = $clientHistStmt->fetchAll();
+
+// Também capturar SAÍDAs via equipment_operations (caso não tenham kanban_history)
+$saidaStmt = $db->prepare("SELECT eo.operation_date as moved_at, eo.client_id,
+    c.name as client_name, c.client_code, c.city, c.state,
+    u.name as moved_by_name
+FROM equipment_operation_items eoi
+JOIN equipment_operations eo ON eo.id = eoi.operation_id
+LEFT JOIN clients c ON c.id = eo.client_id
+LEFT JOIN users u ON u.id = eo.performed_by
+WHERE eoi.equipment_id = ? AND eo.operation_type = 'SAIDA'
+  AND NOT EXISTS (
+    SELECT 1 FROM kanban_history kh
+    WHERE kh.equipment_id = eoi.equipment_id AND kh.client_id = eo.client_id
+      AND DATE(kh.moved_at) = DATE(eo.operation_date) AND kh.to_status IN ('alocado','aguardando_instalacao')
+  )");
+$saidaStmt->execute([$id]);
+$saidasExtras = $saidaStmt->fetchAll();
+
+$clientHistory = [];
+foreach ($clientHistoryRaw as $r) {
+    if ($r['tipo']) {
+        $clientHistory[] = [
+            'moved_at' => $r['moved_at'],
+            'tipo' => $r['tipo'],
+            'client_name' => $r['client_name'],
+            'client_code' => $r['client_code'],
+            'city' => $r['city'],
+            'state' => $r['state'],
+            'moved_by_name' => $r['moved_by_name'],
+            'notes' => $r['notes'],
+        ];
+    }
+}
+foreach ($saidasExtras as $r) {
+    $clientHistory[] = [
+        'moved_at' => $r['moved_at'],
+        'tipo' => 'alocacao',
+        'client_name' => $r['client_name'],
+        'client_code' => $r['client_code'],
+        'city' => $r['city'],
+        'state' => $r['state'],
+        'moved_by_name' => $r['moved_by_name'],
+        'notes' => null,
+    ];
+}
+usort($clientHistory, fn($a, $b) => strcmp($a['moved_at'], $b['moved_at']));
+
 // Auditoria (histórico de ações neste equipamento)
 $auditStmt = $db->prepare("SELECT al.created_at, al.action, al.description, al.old_value, al.new_value, u.name as user_name
 FROM audit_log al
@@ -126,7 +190,7 @@ $conditionMap = ['ok' => '<span class="material-symbols-outlined text-sm">check_
       <div class="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p class="font-mono text-3xl font-bold text-brand mb-2"><?= sanitize(displayTag($eq['asset_tag'], $eq['mac_address'] ?? null)) ?></p>
-          <p class="text-lg text-gray-700 mb-3"><?= sanitize($eq['brand']) ?> <?= sanitize($eq['model_name']) ?></p>
+          <p class="text-lg text-gray-700 mb-3"><?= sanitize(displayModelName($eq['brand'], $eq['model_name'])) ?></p>
           <div class="flex flex-wrap gap-2">
             <?= conditionBadge($eq['condition_status']) ?>
             <?= kanbanBadge($eq['kanban_status']) ?>
@@ -135,6 +199,14 @@ $conditionMap = ['ok' => '<span class="material-symbols-outlined text-sm">check_
               <?= contractLabel($eq['contract_type']) ?>
             </span>
             <?php endif; ?>
+            <?php
+              $viewLabels = parseEquipmentLabels($eq['custom_labels'] ?? null);
+              foreach ($viewLabels as $lbl):
+            ?>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+              <?= htmlspecialchars($lbl) ?>
+            </span>
+            <?php endforeach; ?>
           </div>
         </div>
         <div class="flex items-center gap-2">
@@ -293,11 +365,49 @@ $conditionMap = ['ok' => '<span class="material-symbols-outlined text-sm">check_
           <div>
             <a href="/pages/clients/view.php?code=<?= urlencode($eq['client_code']) ?>"
                class="text-lg font-semibold text-brand hover:underline"><?= sanitize($eq['client_name']) ?></a>
-            <p class="text-sm text-gray-400"><?= sanitize($eq['client_code']) ?></p>
+            <p class="text-sm text-gray-400"><?= sanitize($eq['client_code']) ?><?php if (!empty($eq['client_city']) || !empty($eq['client_state'])): ?> · <?= sanitize($eq['client_city'] ?? '') ?><?= ($eq['client_city'] ?? '') && ($eq['client_state'] ?? '') ? '/' : '' ?><?= sanitize($eq['client_state'] ?? '') ?><?php endif; ?></p>
           </div>
         </div>
       <?php else: ?>
         <p class="text-gray-400">— Disponível em estoque —</p>
+      <?php endif; ?>
+    </div>
+
+    <!-- Histórico de Clientes e Locais (vida do equipamento) -->
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-6 mb-6">
+      <h2 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-1">Histórico de Clientes e Locais</h2>
+      <p class="text-xs text-gray-400 mb-4">Todos os clientes e locais onde este equipamento esteve.</p>
+      <?php if (empty($clientHistory)): ?>
+        <p class="text-gray-400 text-sm">Nenhum registro de alocação ou devolução com cliente.</p>
+      <?php else: ?>
+        <div class="relative pl-6 space-y-3">
+          <div class="absolute left-2 top-0 bottom-0 w-0.5 bg-gray-100"></div>
+          <?php foreach ($clientHistory as $ch): ?>
+          <div class="relative">
+            <div class="absolute -left-4 top-1.5 w-3 h-3 rounded-full border-2 <?= $ch['tipo'] === 'alocacao' ? 'border-green-500 bg-green-50' : 'border-amber-500 bg-amber-50' ?> bg-white"></div>
+            <p class="text-xs text-gray-500"><?= formatDate($ch['moved_at'], true) ?></p>
+            <p class="text-sm font-medium text-gray-800">
+              <?php if ($ch['tipo'] === 'alocacao'): ?>
+                <span class="text-green-700">Enviado para</span>
+              <?php else: ?>
+                <span class="text-amber-700">Devolvido por</span>
+              <?php endif; ?>
+              <a href="/pages/clients/view.php?code=<?= urlencode($ch['client_code']) ?>"
+                 class="text-brand hover:underline"><?= sanitize($ch['client_name']) ?></a>
+              <?= $ch['client_code'] ? ' <span class="text-gray-400 font-mono">' . sanitize($ch['client_code']) . '</span>' : '' ?>
+            </p>
+            <?php if ($ch['city'] || $ch['state']): ?>
+            <p class="text-xs text-gray-500 flex items-center gap-1">
+              <span class="material-symbols-outlined" style="font-size:12px">location_on</span>
+              <?= sanitize($ch['city'] ?? '') ?><?= ($ch['city'] && $ch['state']) ? '/' : '' ?><?= sanitize($ch['state'] ?? '') ?>
+            </p>
+            <?php endif; ?>
+            <?php if ($ch['moved_by_name']): ?>
+            <p class="text-xs text-gray-300">por <?= sanitize($ch['moved_by_name']) ?></p>
+            <?php endif; ?>
+          </div>
+          <?php endforeach; ?>
+        </div>
       <?php endif; ?>
     </div>
 
@@ -320,7 +430,7 @@ $conditionMap = ['ok' => '<span class="material-symbols-outlined text-sm">check_
                 <?= kanbanLabel($h['to_status']) ?>
               </p>
               <?php if ($h['client_name']): ?>
-                <p class="text-xs text-gray-400"><span class="material-symbols-outlined text-brand">assignment_ind</span> <?= sanitize($h['client_name']) ?></p>
+                <p class="text-xs text-gray-400"><span class="material-symbols-outlined text-brand">assignment_ind</span> <?= sanitize($h['client_name']) ?><?php if (!empty($h['city']) || !empty($h['state'])): ?> — <?= sanitize($h['city'] ?? '') ?><?= ($h['city'] ?? '') && ($h['state'] ?? '') ? '/' : '' ?><?= sanitize($h['state'] ?? '') ?><?php endif; ?></p>
               <?php endif; ?>
               <?php if ($h['notes']): ?>
                 <p class="text-xs text-gray-400 italic"><?= sanitize($h['notes']) ?></p>
@@ -804,7 +914,7 @@ async function saveNote(noteId) {
     <div class="label-title">S8 Conect CRM</div>
     <div id="printQR"></div>
     <div class="label-tag"><?= sanitize(displayTag($eq['asset_tag'], $eq['mac_address'] ?? null)) ?></div>
-    <div class="label-model"><?= sanitize($eq['brand']) ?> <?= sanitize($eq['model_name']) ?></div>
+    <div class="label-model"><?= sanitize(displayModelName($eq['brand'], $eq['model_name'])) ?></div>
   </div>
 </div>
 

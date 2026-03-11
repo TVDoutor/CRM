@@ -263,17 +263,22 @@ foreach ($allProjects as $proj) {
 
         $eqId = $db->lastInsertId();
 
-        // Se tinha cliente, registra saída
+        // Se tinha cliente, registra saída em equipment_operations e kanban_history (histórico de vida do equipamento)
         if ($clientId) {
             try {
-                $db->prepare("INSERT INTO operations
-                    (equipment_id, client_id, operation_type, notes, created_at)
-                    VALUES (?, ?, 'saida', 'Alocado via importação Pipedrive', NOW())")
-                   ->execute([$eqId, $clientId]);
+                $db->prepare("INSERT INTO equipment_operations
+                    (operation_type, operation_date, client_id, notes, performed_by)
+                    VALUES ('SAIDA', NOW(), ?, 'Alocado via importação Pipedrive', ?)")
+                   ->execute([$clientId, $performedBy]);
+                $opId = (int)$db->lastInsertId();
 
-                $db->prepare("UPDATE equipment SET current_client_id = ? WHERE id = ?")
-                   ->execute([$clientId, $eqId]);
-            } catch (\Exception $oe) { /* ignora se tabela ops não existir */ }
+                $db->prepare("INSERT INTO equipment_operation_items (operation_id, equipment_id) VALUES (?,?)")
+                   ->execute([$opId, $eqId]);
+
+                $db->prepare("INSERT INTO kanban_history (equipment_id, from_status, to_status, client_id, moved_by, notes)
+                    VALUES (?, NULL, ?, ?, ?, 'Importado do Pipedrive')")
+                   ->execute([$eqId, $kanbanStatus, $clientId, $performedBy]);
+            } catch (\Exception $oe) { /* ignora se tabelas não existirem */ }
         }
 
         $created++;

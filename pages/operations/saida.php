@@ -214,14 +214,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm'])) {
             <?php foreach ($available as $eq): ?>
             <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50 cursor-pointer transition eq-item"
                    data-tag="<?= strtolower(sanitize(displayTag($eq['asset_tag'], $eq['mac_address'] ?? null))) ?>"
-                   data-model="<?= strtolower(sanitize($eq['brand'] . ' ' . $eq['model_name'])) ?>">
+                   data-model="<?= strtolower(sanitize(displayModelName($eq['brand'], $eq['model_name']))) ?>">
               <input type="checkbox" name="equipment_ids[]" value="<?= $eq['id'] ?>"
                      onchange="updateCount()"
                      class="w-4 h-4 text-brand rounded"
                      <?= in_array($eq['id'], array_map('intval', $_POST['equipment_ids'] ?? [])) ? 'checked' : '' ?>>
               <div class="flex-1 min-w-0">
                 <p class="font-mono font-semibold text-sm text-gray-800"><?= sanitize(displayTag($eq['asset_tag'], $eq['mac_address'] ?? null)) ?></p>
-                <p class="text-xs text-gray-500"><?= sanitize($eq['brand']) ?> <?= sanitize($eq['model_name']) ?></p>
+                <p class="text-xs text-gray-500"><?= sanitize(displayModelName($eq['brand'], $eq['model_name'])) ?></p>
                 <?php if ($eq['serial_number']): ?>
                 <p class="text-xs text-gray-400">S/N: <?= sanitize($eq['serial_number']) ?></p>
                 <?php endif; ?>

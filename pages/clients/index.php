@@ -171,6 +171,10 @@ $kpiWithEquip = (int)$db->query("SELECT COUNT(DISTINCT current_client_id) FROM e
                    class="inline-flex items-center gap-1 text-xs text-gray-600 hover:underline">
                   <span class="material-symbols-outlined" style="font-size:14px">edit</span> Editar
                 </a>
+                <a href="/pages/clients/merge.php?from=<?= urlencode($c['client_code']) ?>"
+                   class="inline-flex items-center gap-1 text-xs text-amber-600 hover:underline">
+                  <span class="material-symbols-outlined" style="font-size:14px">merge</span> Mesclar
+                </a>
                 <?php endif; ?>
               </div>
             </td>

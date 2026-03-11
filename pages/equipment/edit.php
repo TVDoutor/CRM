@@ -57,6 +57,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $batch                  = trim($_POST['batch']                  ?? '') ?: null;
     $notes                  = trim($_POST['notes']                  ?? '') ?: null;
     $contract_type          = trim($_POST['contract_type']          ?? '') ?: null;
+    $custom_labels          = isset($_POST['custom_labels']) && is_array($_POST['custom_labels'])
+        ? array_values(array_filter(array_map('trim', $_POST['custom_labels'])))
+        : [];
 
     if (!$asset_tag)     $errors[] = 'Etiqueta é obrigatória.';
     if (!$model_id)      $errors[] = 'Modelo é obrigatório.';
@@ -96,18 +99,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $batchName = $bStmt->fetchColumn() ?: null;
         }
 
-        // Suporta coluna warranty_extended_until (adicionada via migração)
+        $customLabelsJson = json_encode($custom_labels, JSON_UNESCAPED_UNICODE);
+
+        // Suporta coluna warranty_extended_until e custom_labels (adicionadas via migração)
         try {
             $db->prepare("UPDATE equipment SET asset_tag=?, model_id=?, serial_number=?, mac_address=?,
-                entry_date=?, purchase_date=?, warranty_extended_until=?, batch=?, batch_id=?, notes=?, contract_type=?, updated_by=? WHERE id=?")
+                entry_date=?, purchase_date=?, warranty_extended_until=?, batch=?, batch_id=?, notes=?, contract_type=?, custom_labels=?, updated_by=? WHERE id=?")
                ->execute([$asset_tag, $model_id, $serial_number, $mac_address,
-                          $entry_date, $purchase_date ?: null, $warranty_extended_until, $batchName, $batch_id, $notes, $contract_type, $_SESSION['user_id'], $id]);
+                          $entry_date, $purchase_date ?: null, $warranty_extended_until, $batchName, $batch_id, $notes, $contract_type, $customLabelsJson ?: null, $_SESSION['user_id'], $id]);
         } catch (\Exception $e) {
-            // Fallback: colunas mais novas ainda não existem no banco
-            $db->prepare("UPDATE equipment SET asset_tag=?, model_id=?, serial_number=?, mac_address=?,
-                entry_date=?, purchase_date=?, batch=?, notes=?, contract_type=?, updated_by=? WHERE id=?")
-               ->execute([$asset_tag, $model_id, $serial_number, $mac_address,
-                          $entry_date, $purchase_date ?: null, $batchName, $notes, $contract_type, $_SESSION['user_id'], $id]);
+            try {
+                $db->prepare("UPDATE equipment SET asset_tag=?, model_id=?, serial_number=?, mac_address=?,
+                    entry_date=?, purchase_date=?, warranty_extended_until=?, batch=?, batch_id=?, notes=?, contract_type=?, updated_by=? WHERE id=?")
+                   ->execute([$asset_tag, $model_id, $serial_number, $mac_address,
+                              $entry_date, $purchase_date ?: null, $warranty_extended_until, $batchName, $batch_id, $notes, $contract_type, $_SESSION['user_id'], $id]);
+            } catch (\Exception $e2) {
+                $db->prepare("UPDATE equipment SET asset_tag=?, model_id=?, serial_number=?, mac_address=?,
+                    entry_date=?, purchase_date=?, batch=?, notes=?, contract_type=?, updated_by=? WHERE id=?")
+                   ->execute([$asset_tag, $model_id, $serial_number, $mac_address,
+                              $entry_date, $purchase_date ?: null, $batchName, $notes, $contract_type, $_SESSION['user_id'], $id]);
+            }
         }
 
         auditLog('UPDATE', 'equipment', $id, $old,
@@ -160,7 +171,7 @@ $f = $_POST ?: $eq;
           <select name="model_id" required class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand">
             <?php foreach ($models as $m): ?>
             <option value="<?= $m['id'] ?>" <?= (int)$f['model_id'] === (int)$m['id'] ? 'selected' : '' ?>>
-              <?= sanitize($m['brand']) ?> <?= sanitize($m['model_name']) ?>
+              <?= sanitize(displayModelName($m['brand'], $m['model_name'])) ?>
             </option>
             <?php endforeach; ?>
           </select>
@@ -226,6 +237,29 @@ $f = $_POST ?: $eq;
           </select>
           <a href="/pages/equipment/batches.php?action=create" target="_blank"
              class="text-xs text-brand hover:underline mt-1 inline-block">+ Criar novo lote</a>
+        </div>
+        <div class="col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Etiquetas (exibidas no Kanban)</label>
+          <div class="flex flex-wrap gap-2 p-3 max-h-40 overflow-y-auto border border-gray-300 rounded-lg bg-gray-50">
+            <?php
+              $selectedLabels = [];
+              if (isset($_POST['custom_labels']) && is_array($_POST['custom_labels'])) {
+                  $selectedLabels = array_values(array_filter(array_map('trim', $_POST['custom_labels'])));
+              } else {
+                  $selectedLabels = parseEquipmentLabels($eq['custom_labels'] ?? null);
+              }
+            ?>
+            <?php foreach (equipmentLabels() as $label): ?>
+            <label class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border cursor-pointer transition
+                          <?= in_array($label, $selectedLabels) ? 'bg-brand/15 border-brand text-brand' : 'bg-white border-gray-200 hover:border-gray-300' ?>">
+              <input type="checkbox" name="custom_labels[]" value="<?= htmlspecialchars($label) ?>"
+                     <?= in_array($label, $selectedLabels) ? 'checked' : '' ?>
+                     class="rounded text-brand focus:ring-brand">
+              <span class="text-sm font-medium whitespace-nowrap"><?= htmlspecialchars($label) ?></span>
+            </label>
+            <?php endforeach; ?>
+          </div>
+          <p class="text-xs text-gray-400 mt-1">Clique para selecionar uma ou várias etiquetas ao mesmo tempo.</p>
         </div>
         <div class="col-span-2">
           <label class="block text-sm font-medium text-gray-700 mb-1">Observações</label>

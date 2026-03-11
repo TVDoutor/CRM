@@ -53,7 +53,7 @@ if ($report === 'stock') {
     $rows = $stmt->fetchAll();
 
     $data = array_map(fn($r) => [
-        $r['asset_tag'], $r['brand'] . ' ' . $r['model_name'],
+        $r['asset_tag'], displayModelName($r['brand'], $r['model_name']),
         $r['serial_number'] ?? '', $r['mac_address'] ?? '',
         $r['condition_status'] === 'novo' ? 'Novo' : 'Usado',
         kanbanLabel($r['kanban_status']),
@@ -121,7 +121,7 @@ if ($report === 'by_equipment') {
     $rows = $stmt->fetchAll();
 
     $data = array_map(fn($r) => [
-        $r['asset_tag'], $r['brand'] . ' ' . $r['model_name'], $r['serial_number'] ?? '',
+        $r['asset_tag'], displayModelName($r['brand'], $r['model_name']), $r['serial_number'] ?? '',
         $r['from_status'] ? kanbanLabel($r['from_status']) : 'Cadastrado',
         kanbanLabel($r['to_status']),
         $r['client_name'] ?? '—',
@@ -156,7 +156,7 @@ if ($report === 'by_client') {
     $rows = $histStmt->fetchAll();
 
     $data = array_map(fn($r) => [
-        $r['asset_tag'], $r['brand'] . ' ' . $r['model_name'],
+        $r['asset_tag'], displayModelName($r['brand'], $r['model_name']),
         formatDate($r['first_allocation'], true),
         $r['returned_at'] ? formatDate($r['returned_at'], true) : 'Alocado',
     ], $rows);

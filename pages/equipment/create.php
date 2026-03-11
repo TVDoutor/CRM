@@ -2,7 +2,6 @@
 require_once __DIR__ . '/../../includes/auth.php';
 require_once __DIR__ . '/../../includes/helpers.php';
 requireLogin();
-requireRole(['admin','manager']);
 
 $db     = getDB();
 $errors = [];
@@ -24,6 +23,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $notes         = trim($_POST['notes']         ?? '');
     $kanban_status = trim($_POST['kanban_status'] ?? 'entrada');
     $contract_type = trim($_POST['contract_type'] ?? '') ?: null;
+    $custom_labels = isset($_POST['custom_labels']) && is_array($_POST['custom_labels'])
+        ? array_values(array_filter(array_map('trim', $_POST['custom_labels'])))
+        : [];
 
     if (!$asset_tag)     $errors[] = 'Etiqueta é obrigatória.';
     if (!$model_id)      $errors[] = 'Modelo é obrigatório.';
@@ -57,15 +59,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $batchName = $bStmt->fetchColumn() ?: null;
         }
 
-        $db->prepare("INSERT INTO equipment
-            (asset_tag, model_id, serial_number, mac_address, condition_status, kanban_status,
-             contract_type, entry_date, purchase_date, batch, batch_id, notes, created_by)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)")
-           ->execute([
-               $asset_tag, $model_id, $serial_number ?: null, $mac_address ?: null,
-               'novo', $kanban_status, $contract_type, $entry_date, $purchase_date ?: null,
-               $batchName, $batch_id, $notes ?: null, $_SESSION['user_id']
-           ]);
+        $customLabelsJson = json_encode($custom_labels, JSON_UNESCAPED_UNICODE) ?: null;
+        try {
+            $db->prepare("INSERT INTO equipment
+                (asset_tag, model_id, serial_number, mac_address, condition_status, kanban_status,
+                 contract_type, entry_date, purchase_date, batch, batch_id, notes, custom_labels, created_by)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+               ->execute([
+                   $asset_tag, $model_id, $serial_number ?: null, $mac_address ?: null,
+                   'novo', $kanban_status, $contract_type, $entry_date, $purchase_date ?: null,
+                   $batchName, $batch_id, $notes ?: null, $customLabelsJson, $_SESSION['user_id']
+               ]);
+        } catch (\Exception $e) {
+            $db->prepare("INSERT INTO equipment
+                (asset_tag, model_id, serial_number, mac_address, condition_status, kanban_status,
+                 contract_type, entry_date, purchase_date, batch, batch_id, notes, created_by)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)")
+               ->execute([
+                   $asset_tag, $model_id, $serial_number ?: null, $mac_address ?: null,
+                   'novo', $kanban_status, $contract_type, $entry_date, $purchase_date ?: null,
+                   $batchName, $batch_id, $notes ?: null, $_SESSION['user_id']
+               ]);
+        }
 
         $newId = (int)$db->lastInsertId();
 
@@ -126,7 +141,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <option value="">Selecione...</option>
             <?php foreach ($models as $m): ?>
             <option value="<?= $m['id'] ?>" <?= (int)($_POST['model_id'] ?? 0) === (int)$m['id'] ? 'selected' : '' ?>>
-              <?= sanitize($m['brand']) ?> <?= sanitize($m['model_name']) ?>
+              <?= sanitize(displayModelName($m['brand'], $m['model_name'])) ?>
             </option>
             <?php endforeach; ?>
           </select>
@@ -183,6 +198,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <option value="equipamento_cliente" <?= ($_POST['contract_type'] ?? '') === 'equipamento_cliente' ? 'selected' : '' ?>>Equipamento do Cliente</option>
             <option value="parceria"            <?= ($_POST['contract_type'] ?? '') === 'parceria'            ? 'selected' : '' ?>>Parceria</option>
           </select>
+        </div>
+
+        <div class="col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Etiquetas (exibidas no Kanban)</label>
+          <div class="flex flex-wrap gap-2 p-3 max-h-40 overflow-y-auto border border-gray-300 rounded-lg bg-gray-50">
+            <?php
+              $selectedLabels = isset($_POST['custom_labels']) && is_array($_POST['custom_labels'])
+                  ? array_values(array_filter(array_map('trim', $_POST['custom_labels'])))
+                  : [];
+            ?>
+            <?php foreach (equipmentLabels() as $label): ?>
+            <label class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border cursor-pointer transition
+                          <?= in_array($label, $selectedLabels) ? 'bg-brand/15 border-brand text-brand' : 'bg-white border-gray-200 hover:border-gray-300' ?>">
+              <input type="checkbox" name="custom_labels[]" value="<?= htmlspecialchars($label) ?>"
+                     <?= in_array($label, $selectedLabels) ? 'checked' : '' ?>
+                     class="rounded text-brand focus:ring-brand">
+              <span class="text-sm font-medium whitespace-nowrap"><?= htmlspecialchars($label) ?></span>
+            </label>
+            <?php endforeach; ?>
+          </div>
+          <p class="text-xs text-gray-400 mt-1">Clique para selecionar uma ou várias etiquetas ao mesmo tempo.</p>
         </div>
 
         <div>
