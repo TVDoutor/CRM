@@ -145,12 +145,10 @@ $conditionMap = ['ok' => '<span class="material-symbols-outlined text-sm">check_
             </svg>
             QR Code
           </button>
-          <?php if (in_array($_SESSION['user_role'], ['admin','manager'])): ?>
           <a href="/pages/equipment/edit.php?id=<?= $id ?>"
              class="bg-brand text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-800 transition">
             <span class="material-symbols-outlined text-base">edit</span> Editar
           </a>
-          <?php endif; ?>
         </div>
       </div>
 

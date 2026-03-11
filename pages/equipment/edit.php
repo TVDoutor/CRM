@@ -2,7 +2,6 @@
 require_once __DIR__ . '/../../includes/auth.php';
 require_once __DIR__ . '/../../includes/helpers.php';
 requireLogin();
-requireRole(['admin','manager']);
 
 $db = getDB();
 $id = (int)($_GET['id'] ?? 0);
